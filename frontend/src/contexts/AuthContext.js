@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/index';
 
 const AuthContext = createContext();
 
@@ -13,97 +14,85 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
+  // Sempre que o token mudar, atualiza os headers do authService
   useEffect(() => {
-    // Verificar se existe token salvo no localStorage
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error('Erro ao recuperar dados do usuário:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
+    if (token) {
+      authService.setToken(token);
+      verifyToken();
+    } else {
+      authService.setToken(null);
+      setLoading(false);
     }
-    
-    setLoading(false);
-  }, []);
+  }, [token]);
+
+  const verifyToken = async () => {
+    try {
+      const userData = await authService.getProfile();
+      setUser(userData);
+    } catch (error) {
+      console.error('Token inválido ou expirado:', error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email, senha) => {
     try {
-      // TODO: Integrar com API real
-      // const response = await authAPI.login(email, senha);
+      const response = await authService.login(email, senha);
+      const { token: newToken } = response;
       
-      // Simulação de login
-      if (email === 'admin@imperio.com' && senha === '123456') {
-        const userData = {
-          id: 1,
-          nome: 'Administrador',
-          email: email,
-          papel: 'administrador'
-        };
-        
-        const token = 'mock-jwt-token';
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        
-        return { success: true, user: userData };
-      } else {
-        throw new Error('Credenciais inválidas');
-      }
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+
+      return { success: true };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Erro no login:', error);
+      return {
+        success: false,
+        message: error.response?.data?.erro || 'Erro ao fazer login'
+      };
     }
   };
 
   const register = async (userData) => {
     try {
-      // TODO: Integrar com API real
-      // const response = await authAPI.register(userData);
-      
-      // Simulação de registro
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return { success: true, message: 'Usuário criado com sucesso!' };
+      const response = await authService.register(userData);
+      return { success: true, user: response };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Erro no cadastro:', error);
+      return {
+        success: false,
+        message: error.response?.data?.erro || 'Erro ao cadastrar usuário'
+      };
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
   };
 
-  const isAuthenticated = () => {
-    return !!user && !!localStorage.getItem('token');
-  };
+  const isAdmin = () => user?.tipo === 'administrador';
 
-  const isAdmin = () => {
-    return user?.papel === 'administrador';
-  };
+  const isAuthenticated = () => !!user && !!token;
 
   const value = {
     user,
     login,
     register,
     logout,
-    isAuthenticated,
     isAdmin,
-    loading,
+    isAuthenticated,
+    loading
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;

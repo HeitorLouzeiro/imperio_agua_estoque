@@ -1,334 +1,233 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Paper,
-  Typography,
   Button,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
-  Grid,
-  Chip,
-  IconButton,
-  Avatar,
-  Alert,
   Snackbar,
+  Alert,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  CircularProgress
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Person as PersonIcon,
-  AdminPanelSettings as AdminIcon,
-} from '@mui/icons-material';
+import { Edit, Delete } from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext'; // Adjust the import path as necessary
 
 const Users = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      nome: 'João Silva',
-      email: 'joao@imperio.com',
-      papel: 'administrador',
-      status: 'ativo',
-      dataCriacao: '2024-01-15',
-      ultimoLogin: '2025-07-15'
-    },
-    {
-      id: 2,
-      nome: 'Maria Santos',
-      email: 'maria@imperio.com',
-      papel: 'operador',
-      status: 'ativo',
-      dataCriacao: '2024-02-20',
-      ultimoLogin: '2025-07-14'
-    },
-    {
-      id: 3,
-      nome: 'Pedro Oliveira',
-      email: 'pedro@imperio.com',
-      papel: 'operador',
-      status: 'inativo',
-      dataCriacao: '2024-03-10',
-      ultimoLogin: '2025-06-30'
-    },
-  ]);
+  const { user, isAdmin } = useAuth();
 
-  const [open, setOpen] = useState(false);
+  // Hooks devem estar sempre no topo
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
     senha: '',
-    papel: 'operador',
-    status: 'ativo'
+    papel: 'funcionario'
   });
 
-  const columns = [
-    {
-      field: 'avatar',
-      headerName: '',
-      width: 70,
-      sortable: false,
-      renderCell: (params) => (
-        <Avatar sx={{ bgcolor: params.row.papel === 'administrador' ? 'primary.main' : 'secondary.main' }}>
-          {params.row.papel === 'administrador' ? <AdminIcon /> : <PersonIcon />}
-        </Avatar>
-      ),
-    },
-    { field: 'nome', headerName: 'Nome', width: 180 },
-    { field: 'email', headerName: 'Email', width: 200 },
-    {
-      field: 'papel',
-      headerName: 'Papel',
-      width: 130,
-      renderCell: (params) => (
-        <Chip
-          label={params.value === 'administrador' ? 'Admin' : 'Operador'}
-          color={params.value === 'administrador' ? 'primary' : 'default'}
-          size="small"
-          icon={params.value === 'administrador' ? <AdminIcon /> : <PersonIcon />}
-        />
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 100,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value === 'ativo' ? 'success' : 'default'}
-          size="small"
-        />
-      ),
-    },
-    { field: 'dataCriacao', headerName: 'Criado em', width: 120 },
-    { field: 'ultimoLogin', headerName: 'Último Login', width: 130 },
-    {
-      field: 'actions',
-      headerName: 'Ações',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <>
-          <IconButton size="small" onClick={() => handleEdit(params.row)}>
-            <EditIcon />
-          </IconButton>
-          <IconButton 
-            size="small" 
-            onClick={() => handleDelete(params.row.id)}
-            disabled={params.row.papel === 'administrador'}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </>
-      ),
-    },
-  ];
+  const hasAccess = isAdmin();
 
-  const handleAdd = () => {
-    setEditingUser(null);
-    setFormData({
+  useEffect(() => {
+    if (hasAccess) {
+      loadUsers();
+    }
+  }, [hasAccess]);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/usuarios');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDialogOpen = (user = null) => {
+    setEditingUser(user);
+    setFormData(user || {
       nome: '',
       email: '',
       senha: '',
-      papel: 'operador',
-      status: 'ativo'
+      papel: 'funcionario'
     });
-    setOpen(true);
+    setOpenDialog(true);
   };
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
-    setFormData({
-      nome: user.nome,
-      email: user.email,
-      senha: '',
-      papel: user.papel,
-      status: user.status
-    });
-    setOpen(true);
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setEditingUser(null);
   };
 
-  const handleDelete = (id) => {
-    const userToDelete = users.find(u => u.id === id);
-    if (userToDelete?.papel === 'administrador') {
-      setSnackbar({
-        open: true,
-        message: 'Não é possível excluir administradores!',
-        severity: 'error'
-      });
-      return;
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editingUser) {
+        await axios.put(`http://localhost:5000/api/usuarios/${editingUser._id}`, formData);
+        showSnackbar('Usuário atualizado com sucesso!', 'success');
+      } else {
+        await axios.post('http://localhost:5000/api/usuarios', formData);
+        showSnackbar('Usuário criado com sucesso!', 'success');
+      }
+      loadUsers();
+      handleDialogClose();
+    } catch (error) {
+      showSnackbar('Erro ao salvar usuário.', 'error');
     }
-
-    setUsers(users.filter(u => u.id !== id));
-    setSnackbar({
-      open: true,
-      message: 'Usuário excluído com sucesso!',
-      severity: 'success'
-    });
   };
 
-  const handleSave = () => {
-    if (editingUser) {
-      // Editando usuário existente
-      setUsers(users.map(u => 
-        u.id === editingUser.id 
-          ? { ...u, ...formData }
-          : u
-      ));
-      setSnackbar({
-        open: true,
-        message: 'Usuário atualizado com sucesso!',
-        severity: 'success'
-      });
-    } else {
-      // Adicionando novo usuário
-      const newUser = {
-        ...formData,
-        id: Math.max(...users.map(u => u.id)) + 1,
-        dataCriacao: new Date().toISOString().split('T')[0],
-        ultimoLogin: '-'
-      };
-      setUsers([...users, newUser]);
-      setSnackbar({
-        open: true,
-        message: 'Usuário criado com sucesso!',
-        severity: 'success'
-      });
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/usuarios/${id}`);
+      showSnackbar('Usuário excluído com sucesso!', 'success');
+      loadUsers();
+    } catch (error) {
+      showSnackbar('Erro ao excluir usuário.', 'error');
     }
-    setOpen(false);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const handleChange = (field) => (event) => {
-    setFormData({
-      ...formData,
-      [field]: event.target.value
-    });
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
+
+  const filteredUsers = users.filter((u) => {
+    const matchesName = u.nome.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter ? u.papel === roleFilter : true;
+    return matchesName && matchesRole;
+  });
+
+  // Verificação de acesso
+  if (!hasAccess) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          <Typography variant="h6">Acesso Negado</Typography>
+          <Typography>
+            Apenas administradores podem gerenciar usuários do sistema.
+          </Typography>
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Gestão de Usuários
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          size="large"
-        >
-          Novo Usuário
-        </Button>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>Gerenciamento de Usuários</Typography>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <TextField
+          label="Buscar por nome"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel>Filtrar por papel</InputLabel>
+          <Select
+            value={roleFilter}
+            label="Filtrar por papel"
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="admin">Administrador</MenuItem>
+            <MenuItem value="funcionario">Funcionário</MenuItem>
+          </Select>
+        </FormControl>
+        <Button variant="contained" onClick={() => handleDialogOpen()}>Novo Usuário</Button>
       </Box>
 
-      <Paper sx={{ height: 600, width: '100%', mb: 2 }}>
-        <DataGrid
-          rows={users}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[5, 10, 20]}
-          disableSelectionOnClick
-          sx={{
-            '& .MuiDataGrid-cell:hover': {
-              color: 'primary.main',
-            },
-          }}
-        />
-      </Paper>
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nome</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Papel</TableCell>
+                <TableCell align="right">Ações</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredUsers.map((u) => (
+                <TableRow key={u._id}>
+                  <TableCell>{u.nome}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>{u.papel}</TableCell>
+                  <TableCell align="right">
+                    <IconButton onClick={() => handleDialogOpen(u)}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(u._id)}><Delete /></IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredUsers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4}>Nenhum usuário encontrado.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      {/* Dialog para adicionar/editar usuário */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Nome Completo"
-                value={formData.nome}
-                onChange={handleChange('nome')}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange('email')}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={editingUser ? "Nova Senha (deixe em branco para manter)" : "Senha"}
-                type="password"
-                value={formData.senha}
-                onChange={handleChange('senha')}
-                required={!editingUser}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Papel"
-                select
-                value={formData.papel}
-                onChange={handleChange('papel')}
-                SelectProps={{ native: true }}
-              >
-                <option value="operador">Operador</option>
-                <option value="administrador">Administrador</option>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Status"
-                select
-                value={formData.status}
-                onChange={handleChange('status')}
-                SelectProps={{ native: true }}
-              >
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-              </TextField>
-            </Grid>
-          </Grid>
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField label="Nome" name="nome" value={formData.nome} onChange={handleChange} />
+          <TextField label="Email" name="email" value={formData.email} onChange={handleChange} />
+          <TextField label="Senha" name="senha" type="password" value={formData.senha} onChange={handleChange} />
+          <FormControl>
+            <InputLabel>Papel</InputLabel>
+            <Select name="papel" value={formData.papel} onChange={handleChange} label="Papel">
+              <MenuItem value="admin">Administrador</MenuItem>
+              <MenuItem value="funcionario">Funcionário</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSave} variant="contained">
-            {editingUser ? 'Atualizar' : 'Criar'}
-          </Button>
+          <Button onClick={handleDialogClose}>Cancelar</Button>
+          <Button onClick={handleSave} variant="contained">Salvar</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar para feedbacks */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>

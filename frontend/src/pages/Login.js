@@ -1,218 +1,285 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   Box,
-  Paper,
+  Card,
+  CardContent,
   TextField,
   Button,
   Typography,
-  Container,
   Alert,
   InputAdornment,
   IconButton,
-  Divider,
+  Link,
+  Container,
+  Paper,
+  Grid,
+  Fade,
 } from '@mui/material';
 import {
+  Email,
+  Lock,
   Visibility,
   VisibilityOff,
-  Email as EmailIcon,
-  Lock as LockIcon,
-  Water as WaterIcon,
+  Store,
+  Water,
+  Security,
+  Speed,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    senha: ''
+    senha: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/dashboard';
 
-  const handleChange = (field) => (event) => {
+  const handleChange = (e) => {
     setFormData({
       ...formData,
-      [field]: event.target.value
+      [e.target.name]: e.target.value,
     });
     if (error) setError('');
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
       const result = await login(formData.email, formData.senha);
-      
       if (result.success) {
         navigate(from, { replace: true });
       } else {
-        setError(result.error);
+        setError(result.message);
       }
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      setError('Erro interno do servidor. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const features = [
+    {
+      icon: <Store sx={{ fontSize: 40 }} />,
+      title: 'Gestão Completa',
+      description: 'Controle total do seu estoque de água mineral',
+    },
+    {
+      icon: <Speed sx={{ fontSize: 40 }} />,
+      title: 'Relatórios em Tempo Real',
+      description: 'Acompanhe vendas e estoque instantaneamente',
+    },
+    {
+      icon: <Security sx={{ fontSize: 40 }} />,
+      title: 'Segurança Avançada',
+      description: 'Seus dados protegidos com criptografia',
+    },
+  ];
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          py: 3,
-        }}
-      >
-        <Paper
-          elevation={8}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: 400,
-            borderRadius: 2,
-          }}
-        >
-          {/* Logo e Título */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <WaterIcon sx={{ fontSize: 40, color: 'primary.main', mr: 1 }} />
-            <Typography variant="h4" component="h1" fontWeight="bold" color="primary">
-              Império Água
-            </Typography>
-          </Box>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Grid container spacing={4} alignItems="center">
+          {/* Lado esquerdo - Informações */}
+          <Grid item xs={12} md={6}>
+            <Fade in timeout={1000}>
+              <Box sx={{ color: 'white', pr: { md: 4 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+                  <Water sx={{ fontSize: 48, mr: 2 }} />
+                  <Typography variant="h3" fontWeight="bold">
+                    Império Água
+                  </Typography>
+                </Box>
 
-          <Typography variant="h6" component="h2" color="text.secondary" sx={{ mb: 3 }}>
-            Sistema de Controle de Estoque
-          </Typography>
+                <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
+                  Sistema Inteligente de Gestão de Estoque
+                </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+                <Typography variant="body1" sx={{ mb: 6, opacity: 0.8, lineHeight: 1.8 }}>
+                  Gerencie seu negócio de água mineral com eficiência e praticidade. 
+                  Controle vendas, estoque, usuários e relatórios em uma única plataforma.
+                </Typography>
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={formData.email}
-              onChange={handleChange('email')}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon color="action" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
+                <Grid container spacing={3}>
+                  {features.map((feature, index) => (
+                    <Grid item xs={12} key={index}>
+                      <Fade in timeout={1200 + index * 200}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                          <Box
+                            sx={{
+                              color: 'rgba(255, 255, 255, 0.8)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: 2,
+                              p: 1,
+                              backdropFilter: 'blur(10px)',
+                            }}
+                          >
+                            {feature.icon}
+                          </Box>
+                          <Box>
+                            <Typography variant="h6" sx={{ mb: 0.5 }}>
+                              {feature.title}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                              {feature.description}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Fade>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            </Fade>
+          </Grid>
 
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="senha"
-              label="Senha"
-              type={showPassword ? 'text' : 'password'}
-              id="senha"
-              autoComplete="current-password"
-              value={formData.senha}
-              onChange={handleChange('senha')}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleTogglePassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3 }}
-            />
+          {/* Lado direito - Formulário de Login */}
+          <Grid item xs={12} md={6}>
+            <Fade in timeout={800}>
+              <Paper
+                elevation={24}
+                sx={{
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <Card elevation={0} sx={{ backgroundColor: 'transparent' }}>
+                  <CardContent sx={{ p: 6 }}>
+                    <Box sx={{ textAlign: 'center', mb: 4 }}>
+                      <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
+                        Bem-vindo!
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        Faça login para acessar o sistema
+                      </Typography>
+                    </Box>
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading}
-              sx={{ 
-                mt: 2, 
-                mb: 2, 
-                py: 1.5,
-                fontSize: '1.1rem',
-                textTransform: 'none',
-              }}
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
+                    {error && (
+                      <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                        {error}
+                      </Alert>
+                    )}
 
-            <Divider sx={{ my: 2 }} />
+                    <Box component="form" onSubmit={handleSubmit}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Email color="primary" />
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ mb: 3 }}
+                      />
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Não tem uma conta?{' '}
-                <Link 
-                  to="/register" 
-                  style={{ 
-                    color: '#1976d2', 
-                    textDecoration: 'none',
-                    fontWeight: 500
-                  }}
-                >
-                  Cadastre-se aqui
-                </Link>
-              </Typography>
-            </Box>
-          </Box>
+                      <TextField
+                        fullWidth
+                        label="Senha"
+                        name="senha"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.senha}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Lock color="primary" />
+                            </InputAdornment>
+                          ),
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                              >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ mb: 4 }}
+                      />
 
-          {/* Credenciais de exemplo */}
-          <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
-            <Typography variant="caption" color="text.secondary" display="block" align="center">
-              <strong>Credenciais de exemplo:</strong>
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" align="center">
-              Email: admin@imperio.com
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" align="center">
-              Senha: 123456
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        size="large"
+                        loading={loading}
+                        disabled={loading}
+                        sx={{
+                          py: 1.5,
+                          fontSize: '1.1rem',
+                          fontWeight: 600,
+                          borderRadius: 3,
+                          mb: 3,
+                          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)',
+                          },
+                        }}
+                      >
+                        {loading ? 'Entrando...' : 'Entrar'}
+                      </Button>
+
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Link
+                          href="#"
+                          underline="hover"
+                          color="primary"
+                          sx={{
+                            fontWeight: 500,
+                            '&:hover': {
+                              color: 'primary.dark',
+                            },
+                          }}
+                        >
+                          Esqueceu sua senha?
+                        </Link>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Paper>
+            </Fade>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 };
 

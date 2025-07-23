@@ -1,65 +1,82 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Dashboard from './components/Dashboard';
-import Products from './pages/Products';
-import Users from './pages/Users';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ptBR } from 'date-fns/locale';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    background: {
-      default: '#f5f5f5',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-  },
-});
+import theme from './theme';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/common/Layout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+
+// Páginas
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Products from './pages/Products';
+import Sales from './pages/Sales';
+import Users from './pages/Users';
+
+// Componente para redirecionamento baseado na autenticação
+const AuthRedirect = () => {
+  const { isAuthenticated } = useAuth();
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route 
-              path="/" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Products />} />
-              <Route path="produtos" element={<Products />} />
-              <Route 
-                path="usuarios" 
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              {/* Rota raiz - redireciona baseado na autenticação */}
+              <Route path="/" element={<AuthRedirect />} />
+
+              {/* Rota de login - não protegida */}
+              <Route path="/login" element={<Login />} />
+
+              {/* Rotas protegidas com layout */}
+              <Route
+                path="/*"
                 element={
-                  <ProtectedRoute adminOnly>
-                    <Users />
+                  <ProtectedRoute>
+                    <Layout>
+                      <Routes>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/sales" element={<Sales />} />
+
+                        {/* Rota exclusiva para administrador */}
+                        <Route
+                          path="/users"
+                          element={
+                            <ProtectedRoute requiredRole="administrador">
+                              <Users />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Rota catch-all para páginas não encontradas */}
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                      </Routes>
+                    </Layout>
                   </ProtectedRoute>
-                } 
+                }
               />
-            </Route>
-          </Routes>
-        </Router>
-      </AuthProvider>
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   );
 }
+
 
 export default App;

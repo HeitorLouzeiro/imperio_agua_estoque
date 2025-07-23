@@ -1,149 +1,228 @@
-# Frontend - Sistema de Controle de Estoque Império Água
+# Frontend - Império Água
 
-Interface moderna desenvolvida com React e Material-UI para o sistema de gestão de estoque de água.
+Interface web moderna para o sistema de gestão de estoque do Império Água, desenvolvida em ReactJS com Material-UI.
 
-## 🚀 Tecnologias Utilizadas
+## 🚀 Tecnologias
 
-- **React 18** - Biblioteca para interface de usuário
-- **Material-UI (MUI)** - Componentes de interface moderna
+- **React 18** - Biblioteca JavaScript para interfaces
+- **Material-UI (MUI)** - Framework de componentes React
 - **React Router** - Navegação entre páginas
 - **Axios** - Cliente HTTP para API
-- **Context API** - Gerenciamento de estado global
+- **Recharts** - Biblioteca para gráficos
+- **Date-fns** - Manipulação de datas
 
-## 📦 Funcionalidades
+## 📋 Pré-requisitos
 
-### ✅ Implementadas
-- **Autenticação**
-  - Login com validação
-  - Registro de novos usuários
-  - Proteção de rotas
-  - Gerenciamento de sessão
+- Node.js 16 ou superior
+- npm ou yarn
+- Backend do Império Água rodando
 
-- **Dashboard**
-  - Interface responsiva
-  - Menu lateral com navegação
-  - Header com informações do usuário
+## 🛠️ Instalação
 
-- **Gestão de Produtos**
-  - Listagem com DataGrid
-  - Criar, editar e excluir produtos
-  - Indicadores visuais de estoque
-  - Filtros e busca
-
-- **Gestão de Usuários** (Admin apenas)
-  - CRUD completo de usuários
-  - Controle de papéis (Admin/Operador)
-  - Interface intuitiva
-
-### 🔄 Para Implementar
-- Conexão com API backend
-- Relatórios e dashboards
-- Notificações em tempo real
-- Temas personalizáveis
-
-## 🎨 Design System
-
-### Paleta de Cores
-- **Primary**: #1976d2 (Azul)
-- **Secondary**: #dc004e (Vermelho)
-- **Background**: #f5f5f5 (Cinza claro)
-
-### Componentes Principais
-- **DataGrid**: Tabelas interativas com MUI X
-- **Forms**: Formulários responsivos com validação
-- **Dialogs**: Modais para CRUD operations
-- **Snackbars**: Feedbacks de ações
-
-## 🔐 Autenticação
-
-### Credenciais de Teste
-```
-Email: admin@imperio.com
-Senha: 123456
+### Automática
+```bash
+./setup.sh
 ```
 
-### Fluxo de Autenticação
-1. Login salva token JWT no localStorage
-2. Context API gerencia estado global do usuário
-3. Rotas protegidas verificam autenticação
-4. Interceptors do Axios incluem token automaticamente
-
-## 📱 Responsividade
-
-- **Mobile First**: Design otimizado para dispositivos móveis
-- **Breakpoints**: Adaptação automática para tablet e desktop
-- **Menu Lateral**: Collapsible em telas pequenas
-
-## 🛠️ Como Executar
-
+### Manual
 ```bash
 # Instalar dependências
 npm install
 
-# Iniciar em modo desenvolvimento
-npm start
+# Copiar variáveis de ambiente
+cp .env.example .env
 
-# Build para produção
+# Configurar URL da API no arquivo .env
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+## 🎯 Uso
+
+### Desenvolvimento
+```bash
+npm start
+```
+Acesse: http://localhost:3000
+
+### Build de Produção
+```bash
 npm run build
 ```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Testes
+```bash
+npm test
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 📱 Páginas
 
-### `npm test`
+### 🔐 Login
+- Autenticação de usuários
+- Validação de formulário
+- Feedback visual de erros
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 📊 Dashboard
+- Visão geral do sistema
+- Gráficos de vendas
+- Estatísticas em tempo real
+- Produtos com estoque baixo
 
-### `npm run build`
+### 📦 Produtos
+- Listagem com filtros e busca
+- Cadastro e edição
+- Controle de estoque
+- Categorização
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 💰 Vendas
+- Registro de vendas
+- Histórico de transações
+- Relatórios de performance
+- Análise por período
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 👥 Usuários
+- Gestão de usuários
+- Controle de permissões
+- Perfis e funções
+- Status de atividade
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🎨 Funcionalidades
 
-### `npm run eject`
+### Design Responsivo
+- Layout adaptável para mobile, tablet e desktop
+- Componentes otimizados para touch
+- Navegação intuitiva
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Tema Customizado
+- Cores da marca Império Água
+- Tipografia consistente
+- Componentes padronizados
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Estado Global
+- Context API para autenticação
+- Gerenciamento de estado reativo
+- Proteção de rotas
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Integração com API
+- Chamadas HTTP organizadas em services
+- Tratamento de erros centralizado
+- Loading states e feedback
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 📁 Estrutura de Pastas
 
-## Learn More
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   └── common/         # Componentes comuns
+├── contexts/           # Contextos React
+├── pages/              # Páginas da aplicação
+├── services/           # Serviços de API
+├── utils/              # Utilitários
+├── theme.js            # Tema Material-UI
+├── App.js              # Componente principal
+└── index.js            # Ponto de entrada
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🔧 Configuração
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Variáveis de Ambiente
+Configurar no arquivo `.env`:
 
-### Code Splitting
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_NAME=Império Água
+REACT_APP_VERSION=1.0.0
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Customização do Tema
+Editar `src/theme.js` para personalizar:
+- Cores primárias e secundárias
+- Tipografia
+- Espaçamentos
+- Breakpoints
 
-### Analyzing the Bundle Size
+## 🔗 Integração com Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+O frontend se comunica com o backend através de:
 
-### Making a Progressive Web App
+### Endpoints Utilizados
+- `POST /api/usuarios/login` - Autenticação
+- `GET /api/produtos` - Listagem de produtos
+- `POST /api/vendas` - Registro de vendas
+- `GET /api/usuarios` - Gestão de usuários
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Autenticação
+- JWT tokens para autenticação
+- Armazenamento seguro no localStorage
+- Renovação automática de tokens
 
-### Advanced Configuration
+## 📱 Responsividade
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Breakpoints
+- **xs**: 0px - 599px (Mobile)
+- **sm**: 600px - 899px (Tablet)
+- **md**: 900px - 1199px (Desktop pequeno)
+- **lg**: 1200px - 1535px (Desktop)
+- **xl**: 1536px+ (Desktop grande)
 
-### Deployment
+### Layout Adaptativo
+- Sidebar colapsável em mobile
+- Tabelas responsivas com scroll horizontal
+- Cards que se reorganizam em diferentes telas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🎭 Estados da Aplicação
 
-### `npm run build` fails to minify
+### Loading States
+- Skeleton loaders para tabelas
+- Spinners para ações
+- Progress bars para uploads
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Error Handling
+- Snackbars para feedback
+- Páginas de erro customizadas
+- Retry mechanisms
+
+## 🚀 Deploy
+
+### Build
+```bash
+npm run build
+```
+
+### Servir Arquivos Estáticos
+```bash
+npx serve -s build
+```
+
+### Docker (Opcional)
+```dockerfile
+FROM node:16-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npx", "serve", "-s", "build"]
+```
+
+## 🤝 Contribuição
+
+1. Faça fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 💬 Suporte
+
+Para dúvidas ou suporte, entre em contato:
+- Email: suporte@imperioagua.com
+- Issues: [GitHub Issues](link-para-issues)
+
+---
+
+Desenvolvido com ❤️ para o Império Água
