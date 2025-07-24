@@ -15,5 +15,20 @@ services:
       - ./backend/.env:/app/.env
     depends_on:
       - mongo
+  frontend:
+    build: ./frontend
+    container_name: imperio_agua_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+  seed:
+    build: ./backend
+    container_name: imperio_agua_seed
+    command: ["node", "seed.js"]
+    depends_on:
+      - mongo
+    env_file:
+      - ./backend/.env
 volumes:
   mongo_data:
