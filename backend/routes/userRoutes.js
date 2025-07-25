@@ -1,6 +1,7 @@
 import express from 'express';
-import { registrar, login, obterPerfil } from '../controllers/userController.js';
+import { registrar, login, obterPerfil, atualizarPerfil,excluirUsuario, listarUsuarios } from '../controllers/userController.js';
 import { autenticar } from '../middlewares/auth.js';
+import { ro } from 'date-fns/locale';
 
 const router = express.Router();
 
@@ -53,26 +54,12 @@ router.post('/registrar', registrar);
  */
 router.post('/login', login);
 
-/**
- * @swagger
- * /api/usuarios/perfil:
- *   get:
- *     summary: Obtém perfil do usuário autenticado
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Perfil do usuário
- */
+router.get('/listuser', autenticar, listarUsuarios);
+
 router.get('/perfil', autenticar, obterPerfil);
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
+
+router.put('/perfil', autenticar, atualizarPerfil);
+
+router.delete('/:id', autenticar, excluirUsuario);
 
 export default router;

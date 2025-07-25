@@ -36,9 +36,10 @@ async function seed() {
   await Product.deleteMany({});
   const createdProducts = await Product.insertMany(products);
 
-  // Vendas
+  // Vendas com cálculo manual de subtotal, total e número
   const vendas = [
     {
+      numero: 'V000001',
       cliente: 'João da Silva',
       vendedor: createdUsers[1]._id,
       itens: [
@@ -56,11 +57,14 @@ async function seed() {
         },
       ],
       desconto: 0,
+      subtotal: 2 * createdProducts[0].preco + 1 * createdProducts[1].preco,
+      total: 2 * createdProducts[0].preco + 1 * createdProducts[1].preco,
       formaPagamento: 'dinheiro',
       status: 'paga',
       observacoes: 'Cliente pagou em dinheiro.'
     },
     {
+      numero: 'V000002',
       cliente: 'Maria Oliveira',
       vendedor: createdUsers[1]._id,
       itens: [
@@ -72,11 +76,14 @@ async function seed() {
         }
       ],
       desconto: 2,
+      subtotal: 3 * createdProducts[2].preco,
+      total: 3 * createdProducts[2].preco - 2,
       formaPagamento: 'pix',
       status: 'paga',
       observacoes: 'Desconto promocional.'
     }
   ];
+
   await Sale.deleteMany({});
   await Sale.insertMany(vendas);
 

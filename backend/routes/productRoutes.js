@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarProduto, listarProdutos, atualizarProduto, deletarProduto } from '../controllers/productController.js';
+import { criarProduto, listarProdutos, atualizarProduto, deletarProduto,buscarProdutoPorCodigo, buscarProdutoPorMarca  } from '../controllers/productController.js';
 import { autenticar } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -38,6 +38,24 @@ const router = express.Router();
  *         description: Produto criado
  */
 router.get('/', autenticar, listarProdutos);
+/**
+ * @swagger
+ * /api/produtos:
+ *  get:
+ * summary: Lista todos os produtos
+ * security:
+ * - bearerAuth: []
+ * responses:
+ *   200:
+ *     description: Lista de produtos
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Produto'
+ */
+
 router.post('/', autenticar, criarProduto);
 
 /**
@@ -88,4 +106,39 @@ router.post('/', autenticar, criarProduto);
 router.put('/:id', autenticar, atualizarProduto);
 router.delete('/:id', autenticar, deletarProduto);
 
+router.get('/codigo/:codigo', autenticar, buscarProdutoPorCodigo);
+/**
+ * @swagger
+ * /api/produtos/codigo/{codigo}:
+ *   get:
+ *     summary: Busca um produto pelo código
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: codigo
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Produto encontrado
+ *       404:
+ *         description: Produto não encontrado
+ */
+
+router.get('/marca/:marca', autenticar, buscarProdutoPorMarca);
+/**
+ * @swagger
+ * /api/produtos/marca/{marca}:
+ *   get:
+ *     description: Lista produtos por marca
+ *     parameters:
+ *       - in: path
+ *         name: marca
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nome da marcao
+ */
 export default router;

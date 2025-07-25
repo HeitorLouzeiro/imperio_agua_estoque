@@ -3,7 +3,6 @@ import api from './api';
 export const authService = {
   login: async (email, senha) => {
     const response = await api.post('/usuarios/login', { email, senha });
-    console.log('Login response:', response);
     return response.data;
   },
 
@@ -13,16 +12,27 @@ export const authService = {
   },
 
   getProfile: async () => {
-    const response = await api.get('/usuarios/perfil');
+    const response = await api.get('/usuarios/perfil' );
     return response.data;
   },
+
+  getUsers: async () => {
+    const response = await api.get('/usuarios/listuser');
+    return response.data;
+  },  
 
   updateProfile: async (userData) => {
     const response = await api.put('/usuarios/perfil', userData);
     return response.data;
   },
 
-  // >>> ESSA FUNÇÃO PRECISA EXISTIR
+  deleteUser: async (id) => {
+    console.log('Excluindo usuário com ID:', id);
+    if (!id) throw new Error('ID do usuário é necessário para exclusão');
+    const response = await api.delete(`/usuarios/${id}`);
+    return response.data;
+  },
+
   setToken: (token) => {
     localStorage.setItem('token', token);
   },

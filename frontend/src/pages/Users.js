@@ -24,13 +24,13 @@ import {
   CircularProgress
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
-import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext'; // Adjust the import path as necessary
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/index';
 
 const Users = () => {
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const hasAccess = isAdmin();
 
-  // Hooks devem estar sempre no topo
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -38,14 +38,13 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
     senha: '',
     papel: 'funcionario'
   });
-
-  const hasAccess = isAdmin();
 
   useEffect(() => {
     if (hasAccess) {
@@ -56,8 +55,9 @@ const Users = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/usuarios');
-      setUsers(response.data);
+      const data = await authService.getUsers();
+      console.log('Usuários carregados:', data);
+      setUsers(data);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
     } finally {
@@ -88,23 +88,28 @@ const Users = () => {
   const handleSave = async () => {
     try {
       if (editingUser) {
-        await axios.put(`http://localhost:5000/api/usuarios/${editingUser._id}`, formData);
-        showSnackbar('Usuário atualizado com sucesso!', 'success');
+        // ⚠️ ATENÇÃO: Só pode atualizar perfil do próprio usuário via /perfil
+        // Aqui consideramos que o admin está atualizando qualquer usuário
+        showSnackbar('Atualização de outros usuários requer rota PUT /usuarios/:id no backend.', 'warning');
+        return;
       } else {
-        await axios.post('http://localhost:5000/api/usuarios', formData);
+        await authService.register(formData);
         showSnackbar('Usuário criado com sucesso!', 'success');
       }
       loadUsers();
       handleDialogClose();
     } catch (error) {
+      console.error(error);
       showSnackbar('Erro ao salvar usuário.', 'error');
     }
   };
 
   const handleDelete = async (id) => {
+
     if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/usuarios/${id}`);
+      console.log('Excluindo usuário com ID:', id);
+      await authService.deleteUser(id);
       showSnackbar('Usuário excluído com sucesso!', 'success');
       loadUsers();
     } catch (error) {
@@ -126,7 +131,6 @@ const Users = () => {
     return matchesName && matchesRole;
   });
 
-  // Verificação de acesso
   if (!hasAccess) {
     return (
       <Box sx={{ p: 3 }}>
@@ -159,7 +163,7 @@ const Users = () => {
             onChange={(e) => setRoleFilter(e.target.value)}
           >
             <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="admin">Administrador</MenuItem>
+            <MenuItem value="administrador">Administrador</MenuItem>
             <MenuItem value="funcionario">Funcionário</MenuItem>
           </Select>
         </FormControl>
@@ -210,7 +214,7 @@ const Users = () => {
           <FormControl>
             <InputLabel>Papel</InputLabel>
             <Select name="papel" value={formData.papel} onChange={handleChange} label="Papel">
-              <MenuItem value="admin">Administrador</MenuItem>
+              <MenuItem value="administrador">Administrador</MenuItem>
               <MenuItem value="funcionario">Funcionário</MenuItem>
             </Select>
           </FormControl>
