@@ -61,7 +61,7 @@ const Sidebar = ({ mobileOpen, onDrawerToggle }) => {
 
   console.log('User type:', user?.tipo);
 
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = menuItems.filter(item =>
     item.roles.includes(user?.tipo || 'funcionario')
   );
 
@@ -168,7 +168,7 @@ const Sidebar = ({ mobileOpen, onDrawerToggle }) => {
         open={mobileOpen}
         onClose={onDrawerToggle}
         ModalProps={{
-          keepMounted: true,
+          keepMounted: true, // Melhor desempenho no mobile
         }}
         sx={{
           display: { xs: 'block', sm: 'none' },

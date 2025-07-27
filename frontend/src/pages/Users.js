@@ -26,6 +26,7 @@ import {
 import { Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/index';
+import Layout from '../components/common/Layout';
 
 const Users = () => {
   const { isAdmin } = useAuth();
@@ -145,6 +146,7 @@ const Users = () => {
   }
 
   return (
+    <Layout>
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>Gerenciamento de Usuários</Typography>
 
@@ -155,7 +157,7 @@ const Users = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <FormControl sx={{ minWidth: 150 }}>
+        <FormControl sx={{ minWidth: 250 }}>
           <InputLabel>Filtrar por papel</InputLabel>
           <Select
             value={roleFilter}
@@ -236,6 +238,7 @@ const Users = () => {
         </Alert>
       </Snackbar>
     </Box>
+    </Layout>
   );
 };
 
