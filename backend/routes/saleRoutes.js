@@ -1,10 +1,12 @@
 import express from 'express';
 import {
-  criarVenda,
-  listarVendas,
-  obterVenda,
+  atualizarVenda,
   cancelarVenda,
-  obterEstatisticas
+  criarVenda,
+  excluirVenda,
+  listarVendas,
+  obterEstatisticas,
+  obterVenda
 } from '../controllers/saleController.js';
 import { autenticar } from '../middlewares/auth.js';
 
@@ -48,7 +50,7 @@ const router = express.Router();
  *       400:
  *         description: Dados inválidos ou estoque insuficiente
  */
-router.post('/', autenticar, criarVenda);
+router.post('/criar', autenticar, criarVenda);
 
 /**
  * @swagger
@@ -168,5 +170,9 @@ router.get('/:id', autenticar, obterVenda);
  *         description: Venda já cancelada
  */
 router.patch('/:id/cancelar', autenticar, cancelarVenda);
+
+router.delete('/:id', autenticar, excluirVenda);
+
+router.put('/:id', autenticar, atualizarVenda);
 
 export default router;

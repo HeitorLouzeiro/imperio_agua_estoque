@@ -59,8 +59,6 @@ const Sidebar = ({ mobileOpen, onDrawerToggle }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  console.log('User type:', user?.tipo);
-
   const filteredMenuItems = menuItems.filter(item =>
     item.roles.includes(user?.tipo || 'funcionario')
   );

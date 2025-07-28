@@ -1,251 +1,187 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Grid,
-  Chip,
-  IconButton,
-  Alert,
-  Snackbar,
-  Card,
-  CardContent,
-  InputAdornment,
-  MenuItem,
-  Tooltip,
-  Fab,
-  Slide,
+  Box, Paper, Typography, Button, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Grid, Chip, IconButton, Alert, Snackbar,
+  Card, CardContent, InputAdornment, MenuItem, Tooltip, Slide
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Search as SearchIcon,
-  FilterList as FilterIcon,
-  Refresh as RefreshIcon,
-  Inventory as InventoryIcon,
-  Warning as WarningIcon,
+  Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
+  Visibility as ViewIcon, Search as SearchIcon, Refresh as RefreshIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
-import { productService } from '../services';
+import { productService } from '../services/index';
 import Layout from '../components/common/Layout';
-import { useAuth } from '../contexts/AuthContext';
 
 const Products = () => {
-  const { user } = useAuth();
+  // Estados principais
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewProduct, setViewProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
+    codigo: '',
     nome: '',
-    categoria: '',
+    marca: '',
     preco: '',
-    quantidade: '',
-    descricao: '',
-    fornecedor: '',
+    quantidade: ''
   });
+  const [categories, setCategories] = useState([]);
 
-  const categories = ['Água Mineral', 'Água com Gás', 'Água Saborizada', 'Galão', 'Acessórios'];
-
+  // Carrega produtos no início e quando necessário
   useEffect(() => {
     loadProducts();
   }, []);
 
+  // Função para carregar produtos da API
   const loadProducts = async () => {
     try {
       setLoading(true);
-      // Simulando dados até a API estar pronta
-      const mockProducts = [
-        {
-          id: 1,
-          nome: 'Água Crystal 500ml',
-          categoria: 'Água Mineral',
-          preco: 2.50,
-          quantidade: 150,
-          fornecedor: 'Distribuidora Sul',
-          status: 'ativo',
-        },
-        {
-          id: 2,
-          nome: 'Água Pura 1L',
-          categoria: 'Água Mineral',
-          preco: 4.00,
-          quantidade: 80,
-          fornecedor: 'Água Limpa Ltda',
-          status: 'ativo',
-        },
-        {
-          id: 3,
-          nome: 'Galão 20L Premium',
-          categoria: 'Galão',
-          preco: 15.00,
-          quantidade: 25,
-          fornecedor: 'Mega Água',
-          status: 'ativo',
-        },
-        {
-          id: 4,
-          nome: 'Água com Gás 500ml',
-          categoria: 'Água com Gás',
-          preco: 3.00,
-          quantidade: 5,
-          fornecedor: 'Gás & Água',
-          status: 'ativo',
-        },
-      ];
-      setProducts(mockProducts);
+      const response = await productService.getAll();
+      console.log('Produtos recebidos:', response); // Debug: verificar se 'nome' está vindo
+
+      // Formata produtos adicionando a propriedade id para o DataGrid
+      const formatted = response.map(p => ({ id: p._id, ...p }));
+      setProducts(formatted);
+
+      // Extrai marcas únicas para filtro
+      const uniqueMarcas = [...new Set(formatted.map(p => p.marca))];
+      setCategories(uniqueMarcas);
+
     } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
       showSnackbar('Erro ao carregar produtos', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  // Exibe mensagem Snackbar
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
+  // Inicia criação de produto
   const handleAdd = () => {
     setEditingProduct(null);
+    setFormData({ codigo: '', nome: '', marca: '', preco: '', quantidade: '' });
+    setOpen(true);
+  };
+
+  // Inicia edição de produto
+  const handleEdit = (product) => {
+    console.log('Editar produto:', product); // Debug
+    setEditingProduct(product);
     setFormData({
-      nome: '',
-      categoria: '',
-      preco: '',
-      quantidade: '',
-      descricao: '',
-      fornecedor: '',
+      codigo: product.codigo || '',
+      nome: product.nome || '',
+      marca: product.marca || '',
+      preco: product.preco?.toString() || '',
+      quantidade: product.quantidade?.toString() || ''
     });
     setOpen(true);
   };
 
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setFormData(product);
-    setOpen(true);
+  // Visualizar detalhes do produto
+  const handleView = async (id) => {
+    try {
+      const product = await productService.getById(id);
+      console.log('Visualizar produto:', product); // Debug
+      setViewProduct(product);
+    } catch (error) {
+      console.error('Erro ao carregar detalhes:', error);
+      showSnackbar('Erro ao carregar detalhes do produto', 'error');
+    }
   };
 
+  // Excluir produto
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este produto?')) {
       try {
-        setProducts(products.filter(p => p.id !== id));
+        await productService.delete(id);
         showSnackbar('Produto excluído com sucesso!');
+        loadProducts();
       } catch (error) {
+        console.error('Erro ao excluir produto:', error);
         showSnackbar('Erro ao excluir produto', 'error');
       }
     }
   };
 
+  // Salvar criação ou edição
   const handleSave = async () => {
     try {
+      // Validações básicas
+      if (!formData.codigo.trim() || !formData.nome.trim() || !formData.marca.trim()) {
+        showSnackbar('Preencha todos os campos obrigatórios', 'warning');
+        return;
+      }
+
+      const data = {
+        codigo: formData.codigo.trim(),
+        nome: formData.nome.trim(),
+        marca: formData.marca.trim(),
+        preco: parseFloat(formData.preco) || 0,
+        quantidade: parseInt(formData.quantidade) || 0
+      };
+
       if (editingProduct) {
-        // Atualizar produto existente
-        setProducts(products.map(p => 
-          p.id === editingProduct.id 
-            ? { ...formData, id: editingProduct.id, preco: parseFloat(formData.preco), quantidade: parseInt(formData.quantidade) }
-            : p
-        ));
+        await productService.update(editingProduct.id, data);
         showSnackbar('Produto atualizado com sucesso!');
       } else {
-        // Criar novo produto
-        const newProduct = {
-          ...formData,
-          id: Math.max(...products.map(p => p.id)) + 1,
-          preco: parseFloat(formData.preco),
-          quantidade: parseInt(formData.quantidade),
-          status: 'ativo',
-        };
-        setProducts([...products, newProduct]);
+        await productService.create(data);
         showSnackbar('Produto criado com sucesso!');
       }
+
       setOpen(false);
+      loadProducts();
     } catch (error) {
+      console.error('Erro ao salvar produto:', error);
       showSnackbar('Erro ao salvar produto', 'error');
     }
   };
 
+  // Atualiza estado do formulário conforme inputs
   const handleChange = (field) => (event) => {
-    setFormData({
-      ...formData,
-      [field]: event.target.value
-    });
+    setFormData({ ...formData, [field]: event.target.value });
   };
 
+  // Filtra produtos pela busca e categoria
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.categoria.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !filterCategory || product.categoria === filterCategory;
+    const matchesSearch =
+      product.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.marca.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !filterCategory || product.marca === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
+  // Configura colunas do DataGrid
   const columns = [
-    { 
-      field: 'nome', 
-      headerName: 'Nome', 
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2" fontWeight="medium">
-            {params.value}
-          </Typography>
-        </Box>
-      )
-    },
-    { 
-      field: 'categoria', 
-      headerName: 'Categoria', 
-      width: 150,
-      renderCell: (params) => (
-        <Chip 
-          label={params.value} 
-          size="small" 
-          variant="outlined"
-          color="primary"
-        />
-      )
-    },
+    { field: 'codigo', headerName: 'Código', width: 130 },
+    { field: 'nome', headerName: 'Nome', width: 200 },
+    { field: 'marca', headerName: 'Marca', width: 150 },
     {
       field: 'preco',
       headerName: 'Preço',
-      width: 120,
-      renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium" color="success.main">
-          R$ {params.value?.toFixed(2)}
-        </Typography>
-      ),
+      width: 100,
+      renderCell: (params) => `R$ ${params.value.toFixed(2)}`
     },
     {
       field: 'quantidade',
       headerName: 'Estoque',
       width: 120,
-      renderCell: (params) => {
-        const isLowStock = params.value < 20;
-        const isOutOfStock = params.value === 0;
-        
-        return (
-          <Chip
-            label={params.value}
-            color={isOutOfStock ? 'error' : isLowStock ? 'warning' : 'success'}
-            size="small"
-            icon={isLowStock || isOutOfStock ? <WarningIcon /> : null}
-          />
-        );
-      },
-    },
-    { 
-      field: 'fornecedor', 
-      headerName: 'Fornecedor', 
-      width: 150,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={params.value === 0 ? 'error' : params.value < 20 ? 'warning' : 'success'}
+          icon={(params.value < 20 || params.value === 0) ? <WarningIcon /> : null}
+        />
+      )
     },
     {
       field: 'actions',
@@ -255,7 +191,7 @@ const Products = () => {
       renderCell: (params) => (
         <Box>
           <Tooltip title="Visualizar">
-            <IconButton size="small" onClick={() => handleEdit(params.row)}>
+            <IconButton size="small" onClick={() => handleView(params.row.id)}>
               <ViewIcon />
             </IconButton>
           </Tooltip>
@@ -264,87 +200,54 @@ const Products = () => {
               <EditIcon />
             </IconButton>
           </Tooltip>
-          {user?.tipo === 'admin' && (
-            <Tooltip title="Excluir">
-              <IconButton 
-                size="small" 
-                color="error" 
-                onClick={() => handleDelete(params.row.id)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Tooltip title="Excluir">
+            <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
-      ),
-    },
+      )
+    }
   ];
 
   return (
     <Layout>
-      <Box>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Produtos
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Gerencie o catálogo de produtos do seu estoque
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            sx={{ borderRadius: 2 }}
-          >
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h4">Produtos</Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
             Novo Produto
           </Button>
         </Box>
 
-        {/* Filtros */}
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
+        <Card sx={{ mb: 2 }}>
           <CardContent>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  placeholder="Buscar produtos..."
+                  placeholder="Buscar por código, nome ou marca"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} sm={4}>
                 <TextField
-                  fullWidth
                   select
-                  label="Categoria"
+                  fullWidth
+                  label="Filtrar por marca"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
                   <MenuItem value="">Todas</MenuItem>
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
+                  {categories.map(c => (
+                    <MenuItem key={c} value={c}>{c}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={loadProducts}
-                >
+              <Grid item xs={12} sm={2}>
+                <Button fullWidth variant="outlined" startIcon={<RefreshIcon />} onClick={loadProducts}>
                   Atualizar
                 </Button>
               </Grid>
@@ -352,64 +255,55 @@ const Products = () => {
           </CardContent>
         </Card>
 
-        {/* Tabela de Produtos */}
-        <Paper sx={{ height: 600, borderRadius: 3 }}>
+        <Paper sx={{ height: 500 }}>
           <DataGrid
             rows={filteredProducts}
             columns={columns}
             loading={loading}
             pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
-            }}
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
             disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-main': {
-                borderRadius: 3,
-              },
-            }}
           />
         </Paper>
 
-        {/* Dialog para adicionar/editar produto */}
-        <Dialog 
-          open={open} 
-          onClose={() => setOpen(false)} 
-          maxWidth="md" 
+        {/* Modal de Formulário */}
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth="sm"
           fullWidth
           TransitionComponent={Slide}
           TransitionProps={{ direction: "up" }}
         >
-          <DialogTitle>
-            {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-          </DialogTitle>
+          <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Nome do Produto"
+                  label="Código"
+                  value={formData.codigo}
+                  onChange={handleChange('codigo')}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Nome"
                   value={formData.nome}
                   onChange={handleChange('nome')}
                   required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  select
-                  label="Categoria"
-                  value={formData.categoria}
-                  onChange={handleChange('categoria')}
+                  label="Marca"
+                  value={formData.marca}
+                  onChange={handleChange('marca')}
                   required
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -418,14 +312,14 @@ const Products = () => {
                   type="number"
                   value={formData.preco}
                   onChange={handleChange('preco')}
-                  inputProps={{ step: 0.01, min: 0 }}
+                  inputProps={{ min: 0, step: 0.01 }}
                   required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Quantidade em Estoque"
+                  label="Quantidade"
                   type="number"
                   value={formData.quantidade}
                   onChange={handleChange('quantidade')}
@@ -433,48 +327,70 @@ const Products = () => {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Fornecedor"
-                  value={formData.fornecedor}
-                  onChange={handleChange('fornecedor')}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Descrição"
-                  value={formData.descricao}
-                  onChange={handleChange('descricao')}
-                  multiline
-                  rows={3}
-                />
-              </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              variant="contained"
-            >
+            <Button onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} variant="contained">
               {editingProduct ? 'Atualizar' : 'Criar'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar para feedbacks */}
+        {/* Modal de Visualização */}
+        <Dialog
+          open={!!viewProduct}
+          onClose={() => setViewProduct(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Detalhes do Produto</DialogTitle>
+          <DialogContent dividers>
+            {viewProduct && (
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2">Código:</Typography>
+                  <Typography>{viewProduct.codigo}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2">Nome:</Typography>
+                  <Typography>{viewProduct.nome}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2">Marca:</Typography>
+                  <Typography>{viewProduct.marca}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Preço:</Typography>
+                  <Typography>R$ {viewProduct.preco?.toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Quantidade:</Typography>
+                  <Typography>{viewProduct.quantidade}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">
+                    Criado em: {new Date(viewProduct.createdAt).toLocaleString()}<br />
+                    Atualizado em: {new Date(viewProduct.updatedAt).toLocaleString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setViewProduct(null)}>Fechar</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={4000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
           <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
             sx={{ width: '100%' }}
           >
             {snackbar.message}

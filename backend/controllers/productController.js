@@ -53,6 +53,16 @@ export const buscarProdutoPorCodigo = async (req, res) => {
   }
 };
 
+export const getById = async (req, res) => {
+  try {
+    const produto = await Product.findById(req.params.id);
+    if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
+    res.json(produto);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+};
+
 export const buscarProdutoPorMarca = async (req, res) => {
   try {
     const { marca } = req.params;

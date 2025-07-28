@@ -1,7 +1,6 @@
 import express from 'express';
-import { registrar, login, obterPerfil, atualizarPerfil,excluirUsuario, listarUsuarios } from '../controllers/userController.js';
+import {  atualizarUsuarioById, excluirUsuario, listarUsuarios, login, obterPerfil, registrar } from '../controllers/userController.js';
 import { autenticar } from '../middlewares/auth.js';
-import { ro } from 'date-fns/locale';
 
 const router = express.Router();
 
@@ -58,7 +57,7 @@ router.get('/listuser', autenticar, listarUsuarios);
 
 router.get('/perfil', autenticar, obterPerfil);
 
-router.put('/perfil', autenticar, atualizarPerfil);
+router.put('/:id', autenticar, atualizarUsuarioById);
 
 router.delete('/:id', autenticar, excluirUsuario);
 

@@ -38,7 +38,10 @@ const vendaSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  itens: [itemVendaSchema],
+  itens: {
+    type: [itemVendaSchema],
+    validate: [v => v.length > 0, 'A venda precisa ter ao menos um item.']
+  },
   subtotal: {
     type: Number,
     required: true,
@@ -76,20 +79,23 @@ const vendaSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Middleware para gerar número da venda automaticamente
-vendaSchema.pre('save', async function(next) {
-  if (!this.numero) {
-    const count = await mongoose.model('Sale').countDocuments();
-    this.numero = `V${String(count + 1).padStart(6, '0')}`;
+vendaSchema.pre('save', async function (next) {
+  try {
+    // Gerar número da venda
+    if (!this.numero) {
+      const count = await mongoose.model('Sale').countDocuments();
+      this.numero = `V${String(count + 1).padStart(6, '0')}`;
+    }
+
+    // Calcular subtotal e total
+    this.subtotal = this.itens.reduce((acc, item) => acc + item.subtotal, 0);
+    this.total = this.subtotal - this.desconto;
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
-// Calcular total automaticamente
-vendaSchema.pre('save', function(next) {
-  this.subtotal = this.itens.reduce((acc, item) => acc + item.subtotal, 0);
-  this.total = this.subtotal - this.desconto;
-  next();
-});
 
 export default mongoose.model('Sale', vendaSchema);

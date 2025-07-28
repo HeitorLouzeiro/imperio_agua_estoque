@@ -17,54 +17,41 @@ import {
   Card,
   CardContent,
   InputAdornment,
-  MenuItem,
-  Tooltip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Autocomplete,
   Divider,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  Tooltip,
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridSearchIcon } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Search as SearchIcon,
-  ShoppingCart as CartIcon,
-  Receipt as ReceiptIcon,
-  Remove as RemoveIcon,
-  AttachMoney as MoneyIcon,
   Print as PrintIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { salesService, productService } from '../services';
 import Layout from '../components/common/Layout';
-import DailyRevenueReport from '../components/reports/DailyRevenueReport';
 
 const Sales = () => {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [editingSale, setEditingSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  
-  // Estados para nova venda
+
+  // Dados para nova venda
   const [saleData, setSaleData] = useState({
     cliente: '',
     data: new Date(),
     observacoes: '',
+    formaPagamento: 'dinheiro',
+    desconto: 0,
   });
   const [saleItems, setSaleItems] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -75,45 +62,16 @@ const Sales = () => {
     loadProducts();
   }, []);
 
+  // Carregar vendas da API
   const loadSales = async () => {
     try {
       setLoading(true);
-      // Simulando dados até a API estar pronta
-      const mockSales = [
-        {
-          id: 1,
-          cliente: 'João Silva',
-          data: '2024-01-15',
-          total: 125.50,
-          status: 'finalizada',
-          itens: [
-            { produto: 'Água Crystal 500ml', quantidade: 50, preco: 2.50 },
-          ],
-        },
-        {
-          id: 2,
-          cliente: 'Maria Santos',
-          data: '2024-01-14',
-          total: 89.90,
-          status: 'finalizada',
-          itens: [
-            { produto: 'Água Pura 1L', quantidade: 20, preco: 4.00 },
-            { produto: 'Água Crystal 500ml', quantidade: 4, preco: 2.50 },
-          ],
-        },
-        {
-          id: 3,
-          cliente: 'Pedro Costa',
-          data: '2024-01-14',
-          total: 234.70,
-          status: 'pendente',
-          itens: [
-            { produto: 'Galão 20L Premium', quantidade: 15, preco: 15.00 },
-            { produto: 'Água com Gás 500ml', quantidade: 3, preco: 3.00 },
-          ],
-        },
-      ];
-      setSales(mockSales);
+      const response = await salesService.getAll();
+      const salesWithId = response.map(sale => ({
+        ...sale,
+        id: sale._id || sale.id,
+      }));
+      setSales(salesWithId);
     } catch (error) {
       showSnackbar('Erro ao carregar vendas', 'error');
     } finally {
@@ -121,30 +79,33 @@ const Sales = () => {
     }
   };
 
+  // Carregar produtos da API
   const loadProducts = async () => {
     try {
-      const mockProducts = [
-        { id: 1, nome: 'Água Crystal 500ml', preco: 2.50, quantidade: 150 },
-        { id: 2, nome: 'Água Pura 1L', preco: 4.00, quantidade: 80 },
-        { id: 3, nome: 'Galão 20L Premium', preco: 15.00, quantidade: 25 },
-        { id: 4, nome: 'Água com Gás 500ml', preco: 3.00, quantidade: 45 },
-      ];
-      setProducts(mockProducts);
+      const response = await productService.getAll();
+      const productsWithId = response.map(prod => ({
+        ...prod,
+        id: prod._id || prod.id,
+      }));
+      setProducts(productsWithId);
     } catch (error) {
       showSnackbar('Erro ao carregar produtos', 'error');
     }
   };
 
+  // Mostrar Snackbar
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
+  // Abrir modal nova venda
   const handleNewSale = () => {
-    setEditingSale(null);
     setSaleData({
       cliente: '',
       data: new Date(),
       observacoes: '',
+      formaPagamento: 'dinheiro',
+      desconto: 0,
     });
     setSaleItems([]);
     setSelectedProduct(null);
@@ -152,93 +113,104 @@ const Sales = () => {
     setOpen(true);
   };
 
+  // Adicionar item na venda
   const handleAddItem = () => {
-    if (!selectedProduct || quantity <= 0) return;
-    
-    const existingItemIndex = saleItems.findIndex(item => item.produto === selectedProduct.nome);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...saleItems];
-      updatedItems[existingItemIndex].quantidade += quantity;
-      setSaleItems(updatedItems);
+    if (!selectedProduct || quantity <= 0) {
+      showSnackbar('Selecione um produto e defina quantidade válida', 'error');
+      return;
+    }
+
+    const existingIndex = saleItems.findIndex(item => item.produto === selectedProduct.id);
+
+    if (existingIndex >= 0) {
+      const updated = [...saleItems];
+      updated[existingIndex].quantidade += quantity;
+      updated[existingIndex].subtotal = updated[existingIndex].quantidade * updated[existingIndex].precoUnitario;
+      setSaleItems(updated);
     } else {
       setSaleItems([
         ...saleItems,
         {
-          produto: selectedProduct.nome,
+          produto: selectedProduct.id,
+          nome: selectedProduct.nome,
           quantidade: quantity,
-          preco: selectedProduct.preco,
-          total: selectedProduct.preco * quantity,
+          precoUnitario: selectedProduct.preco,
+          subtotal: selectedProduct.preco * quantity,
         },
       ]);
     }
-    
+
     setSelectedProduct(null);
     setQuantity(1);
   };
 
+  // Remover item da venda
   const handleRemoveItem = (index) => {
     setSaleItems(saleItems.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => {
-    return saleItems.reduce((sum, item) => sum + item.total, 0);
+  // Calcular total da venda
+  const calculateSubtotal = () => {
+    return saleItems.reduce((acc, item) => acc + item.subtotal, 0);
   };
 
+  const calculateTotal = () => {
+    return calculateSubtotal() - (saleData.desconto || 0);
+  };
+
+  // Salvar venda na API
   const handleSaveSale = async () => {
-    if (!saleData.cliente || saleItems.length === 0) {
-      showSnackbar('Preencha todos os campos obrigatórios', 'error');
+    if (!saleData.cliente) {
+      showSnackbar('Informe o nome do cliente', 'error');
       return;
     }
-
+    if (saleItems.length === 0) {
+      showSnackbar('Adicione pelo menos um produto', 'error');
+      return;
+    }
     try {
-      const newSale = {
-        id: Math.max(...sales.map(s => s.id)) + 1,
-        ...saleData,
-        data: saleData.data.toISOString().split('T')[0],
-        itens: saleItems,
-        total: calculateTotal(),
-        status: 'finalizada',
+      const payload = {
+        cliente: saleData.cliente,
+        formaPagamento: saleData.formaPagamento,
+        desconto: saleData.desconto,
+        observacoes: saleData.observacoes,
+        itens: saleItems.map(item => ({
+          produto: item.produto,            // ID do produto
+          quantidade: item.quantidade,
+          precoUnitario: item.precoUnitario,
+          subtotal: item.subtotal           // quantidade * precoUnitario
+        }))
       };
 
-      setSales([newSale, ...sales]);
-      showSnackbar('Venda registrada com sucesso!');
+
+      await salesService.create(payload);
+      showSnackbar('Venda registrada com sucesso!', 'success');
       setOpen(false);
+      loadSales();
     } catch (error) {
-      showSnackbar('Erro ao registrar venda', 'error');
+      console.error('Erro ao criar venda:', error.response?.data || error.message);
+      showSnackbar('Erro ao criar venda', 'error');
     }
   };
 
-  const handleDeleteSale = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta venda?')) {
-      try {
-        setSales(sales.filter(s => s.id !== id));
-        showSnackbar('Venda excluída com sucesso!');
-      } catch (error) {
-        showSnackbar('Erro ao excluir venda', 'error');
-      }
-    }
-  };
-
-  const filteredSales = sales.filter(sale => {
-    const matchesSearch = sale.cliente.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = !dateFilter || sale.data === dateFilter.toISOString().split('T')[0];
-    return matchesSearch && matchesDate;
-  });
-
+  // Colunas para DataGrid
   const columns = [
-    { field: 'id', headerName: 'ID', width: 80 },
+    { field: 'id', headerName: 'ID', width: 90 },
     { field: 'cliente', headerName: 'Cliente', width: 200 },
-    { 
-      field: 'data', 
-      headerName: 'Data', 
-      width: 120,
-      renderCell: (params) => new Date(params.value).toLocaleDateString('pt-BR'),
+    {
+      field: 'dataVenda',
+      headerName: 'Data',
+      width: 130,
+      valueGetter: (params) => params.row.dataVenda || params.row.data,
+      renderCell: (params) => {
+        const date = params.value ? new Date(params.value) : null;
+        return date ? date.toLocaleDateString('pt-BR') : '';
+      },
     },
     {
       field: 'total',
       headerName: 'Total',
-      width: 120,
+      width: 130,
       renderCell: (params) => (
         <Typography variant="body2" fontWeight="bold" color="success.main">
           R$ {params.value?.toFixed(2)}
@@ -248,11 +220,11 @@ const Sales = () => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      width: 130,
       renderCell: (params) => (
         <Chip
-          label={params.value}
-          color={params.value === 'finalizada' ? 'success' : 'warning'}
+          label={params.value || 'paga'}
+          color={params.value === 'paga' ? 'success' : 'warning'}
           size="small"
         />
       ),
@@ -260,7 +232,7 @@ const Sales = () => {
     {
       field: 'actions',
       headerName: 'Ações',
-      width: 150,
+      width: 140,
       sortable: false,
       renderCell: (params) => (
         <Box>
@@ -274,15 +246,7 @@ const Sales = () => {
               <PrintIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Excluir">
-            <IconButton 
-              size="small" 
-              color="error" 
-              onClick={() => handleDeleteSale(params.row.id)}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+          {/* Implemente exclusão se quiser */}
         </Box>
       ),
     },
@@ -291,7 +255,6 @@ const Sales = () => {
   return (
     <Layout>
       <Box>
-        {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
@@ -301,300 +264,163 @@ const Sales = () => {
               Gerencie as vendas e faturamento da empresa
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleNewSale}
-            sx={{ borderRadius: 2 }}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleNewSale} sx={{ borderRadius: 2 }}>
             Nova Venda
           </Button>
         </Box>
 
-        {/* Filtros */}
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
-          <CardContent>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={5}>
-                <TextField
-                  fullWidth
-                  placeholder="Buscar por cliente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <DatePicker
-                  label="Filtrar por data"
-                  value={dateFilter}
-                  onChange={setDateFilter}
-                  slotProps={{ textField: { fullWidth: true } }}
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setDateFilter(null);
-                  }}
-                >
-                  Limpar Filtros
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Estatísticas Rápidas */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ textAlign: 'center', py: 2 }}>
-              <CardContent>
-                <Typography variant="h4" color="primary" fontWeight="bold">
-                  {sales.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total de Vendas
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ textAlign: 'center', py: 2 }}>
-              <CardContent>
-                <Typography variant="h4" color="success.main" fontWeight="bold">
-                  R$ {sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Faturamento Total
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ textAlign: 'center', py: 2 }}>
-              <CardContent>
-                <Typography variant="h4" color="warning.main" fontWeight="bold">
-                  {sales.filter(s => s.status === 'pendente').length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Vendas Pendentes
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ textAlign: 'center', py: 2 }}>
-              <CardContent>
-                <Typography variant="h4" color="info.main" fontWeight="bold">
-                  R$ {(sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length || 0).toFixed(2)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Ticket Médio
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Tabela de Vendas */}
-        <Paper sx={{ height: 500, borderRadius: 3 }}>
+        {/* Tabela de vendas */}
+        <Paper sx={{ height: 440, width: '100%', mb: 3 }}>
           <DataGrid
-            rows={filteredSales}
+            rows={sales}
             columns={columns}
             loading={loading}
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
-            }}
-            disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-main': {
-                borderRadius: 3,
-              },
-            }}
+            pageSize={8}
+            rowsPerPageOptions={[8, 16]}
+            disableSelectionOnClick
+            getRowId={(row) => row.id}
           />
         </Paper>
 
-        {/* Relatório de Rendimento Diário */}
-        <DailyRevenueReport onRefresh={loadSales} />
-
-        {/* Dialog para nova venda */}
-        <Dialog 
-          open={open} 
-          onClose={() => setOpen(false)} 
-          maxWidth="lg" 
-          fullWidth
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CartIcon />
-              Nova Venda
-            </Box>
-          </DialogTitle>
+        {/* Modal de nova venda */}
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Nova Venda</DialogTitle>
           <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              {/* Dados da Venda */}
+            <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Dados da Venda
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Nome do Cliente"
-                        value={saleData.cliente}
-                        onChange={(e) => setSaleData({ ...saleData, cliente: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <DatePicker
-                        label="Data da Venda"
-                        value={saleData.data}
-                        onChange={(date) => setSaleData({ ...saleData, data: date })}
-                        slotProps={{ textField: { fullWidth: true } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Observações"
-                        value={saleData.observacoes}
-                        onChange={(e) => setSaleData({ ...saleData, observacoes: e.target.value })}
-                        multiline
-                        rows={3}
-                      />
-                    </Grid>
-                  </Grid>
-                </Card>
+                <TextField
+                  label="Cliente"
+                  fullWidth
+                  value={saleData.cliente}
+                  onChange={(e) => setSaleData({ ...saleData, cliente: e.target.value })}
+                  required
+                />
               </Grid>
-
-              {/* Adicionar Produtos */}
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Adicionar Produto
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Autocomplete
-                        options={products}
-                        getOptionLabel={(option) => `${option.nome} - R$ ${option.preco.toFixed(2)}`}
-                        value={selectedProduct}
-                        onChange={(_, newValue) => setSelectedProduct(newValue)}
-                        renderInput={(params) => (
-                          <TextField {...params} label="Produto" fullWidth />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={8}>
-                      <TextField
-                        fullWidth
-                        label="Quantidade"
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        inputProps={{ min: 1 }}
-                      />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={handleAddItem}
-                        disabled={!selectedProduct}
-                        sx={{ height: '56px' }}
-                      >
-                        Adicionar
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Card>
+                <DatePicker
+                  label="Data da Venda"
+                  value={saleData.data}
+                  onChange={(newValue) => setSaleData({ ...saleData, data: newValue })}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
               </Grid>
-
-              {/* Lista de Itens */}
+              <Grid item xs={12} md={6}>
+                <Autocomplete
+                  options={products}
+                  getOptionLabel={(option) => option.nome}
+                  value={selectedProduct}
+                  onChange={(event, newValue) => setSelectedProduct(newValue)}
+                  renderInput={(params) => <TextField {...params} label="Produto" fullWidth />}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              </Grid>
+              <Grid item xs={6} md={2}>
+                <TextField
+                  label="Quantidade"
+                  type="number"
+                  fullWidth
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                  inputProps={{ min: 1 }}
+                />
+              </Grid>
+              <Grid item xs={6} md={2} display="flex" alignItems="center">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddItem}
+                  disabled={!selectedProduct || quantity < 1}
+                >
+                  Adicionar
+                </Button>
+              </Grid>
               <Grid item xs={12}>
-                <Card sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Itens da Venda
+                <Divider sx={{ my: 1 }} />
+                {saleItems.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    Nenhum produto adicionado
                   </Typography>
-                  {saleItems.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                      Nenhum item adicionado
+                ) : (
+                  <List>
+                    {saleItems.map((item, index) => (
+                      <ListItem key={index} divider>
+                        <ListItemText
+                          primary={`${item.nome} - Quantidade: ${item.quantidade}`}
+                          secondary={`Preço Unitário: R$ ${item.precoUnitario.toFixed(2)} | Subtotal: R$ ${item.subtotal.toFixed(2)}`}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton edge="end" color="error" onClick={() => handleRemoveItem(index)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+                {saleItems.length > 0 && (
+                  <Box sx={{ mt: 1, textAlign: 'right' }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Subtotal: R$ {calculateSubtotal().toFixed(2)}
                     </Typography>
-                  ) : (
-                    <>
-                      <List>
-                        {saleItems.map((item, index) => (
-                          <ListItem key={index} divider>
-                            <ListItemText
-                              primary={item.produto}
-                              secondary={`${item.quantidade}x R$ ${item.preco.toFixed(2)}`}
-                            />
-                            <ListItemSecondaryAction>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" fontWeight="bold">
-                                  R$ {item.total.toFixed(2)}
-                                </Typography>
-                                <IconButton 
-                                  size="small" 
-                                  color="error"
-                                  onClick={() => handleRemoveItem(index)}
-                                >
-                                  <RemoveIcon />
-                                </IconButton>
-                              </Box>
-                            </ListItemSecondaryAction>
-                          </ListItem>
-                        ))}
-                      </List>
-                      <Divider sx={{ my: 2 }} />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h6">
-                          Total:
-                        </Typography>
-                        <Typography variant="h5" color="success.main" fontWeight="bold">
-                          R$ {calculateTotal().toFixed(2)}
-                        </Typography>
-                      </Box>
-                    </>
-                  )}
-                </Card>
+                    <TextField
+                      label="Desconto"
+                      type="number"
+                      size="small"
+                      sx={{ mt: 1, width: 150 }}
+                      value={saleData.desconto}
+                      onChange={(e) => setSaleData({ ...saleData, desconto: Number(e.target.value) || 0 })}
+                      inputProps={{ min: 0 }}
+                    />
+                    <Typography variant="h6" fontWeight="bold" sx={{ mt: 1 }}>
+                      Total: R$ {calculateTotal().toFixed(2)}
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Forma de Pagamento"
+                  select
+                  fullWidth
+                  value={saleData.formaPagamento}
+                  onChange={(e) => setSaleData({ ...saleData, formaPagamento: e.target.value })}
+                  SelectProps={{
+                    native: true,
+                  }}
+                >
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao_debito">Cartão Débito</option>
+                  <option value="cartao_credito">Cartão Crédito</option>
+                  <option value="pix">Pix</option>
+                  <option value="transferencia">Transferência</option>
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Observações"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  value={saleData.observacoes}
+                  onChange={(e) => setSaleData({ ...saleData, observacoes: e.target.value })}
+                />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSaveSale} 
-              variant="contained"
-              disabled={!saleData.cliente || saleItems.length === 0}
-            >
-              Finalizar Venda
+            <Button onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleSaveSale}>
+              Salvar
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={4000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}

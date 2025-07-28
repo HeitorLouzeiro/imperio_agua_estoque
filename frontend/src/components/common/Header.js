@@ -41,7 +41,7 @@ const Header = ({ onDrawerToggle }) => {
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1  , borderRadius:0}}>
       <Toolbar>
         <IconButton
           color="inherit"

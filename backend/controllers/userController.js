@@ -53,20 +53,44 @@ export const obterPerfil = async (req, res) => {
   }
 };
 
-export const atualizarPerfil = async (req, res) => {
+export const atualizarUsuarioById = async (req, res) => {
   try {
-    const { nome, email, senha } = req.body;
-    const updates = { nome, email };
-    if (senha) updates.senha = await bcrypt.hash(senha, 10);
-    
-    const usuario = await User.findByIdAndUpdate(req.userId, updates, { new: true }).select('-senha');
+    const { nome, email, senha, papel } = req.body;
+    const usuario = await User.findById(req.params.id);
     if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
-    
-    res.json(usuario);
+    if (senha) {
+      const hash = await bcrypt.hash(senha, 10);
+      usuario.senha = hash;
+    }
+    usuario.nome = nome || usuario.nome;
+    usuario.email = email || usuario.email;
+    usuario.papel = papel || usuario.papel;
+    await usuario.save();
+    res.json({ mensagem: 'Usuário atualizado com sucesso', usuario });
   } catch (err) {
     res.status(400).json({ erro: err.message });
   }
-}
+};
+
+export const atualizarSenhaViaToken = async (req, res) => {
+  try {
+    const { token, novaSenha } = req.body;
+    if (!token || !novaSenha) return res.status(400).json({ erro: 'Token e nova senha são obrigatórios' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo');
+    const usuario = await User.findById(decoded.id);
+    if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
+    const hash = await bcrypt.hash(novaSenha, 10);
+    usuario.senha = hash;
+    await usuario.save();
+    res.json({ mensagem: 'Senha atualizada com sucesso' });
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ erro: 'Token inválido' });
+    }
+    res.status(400).json({ erro: err.message });
+  }
+};
+
 
 export const  excluirUsuario = async (req, res) => {
   try {

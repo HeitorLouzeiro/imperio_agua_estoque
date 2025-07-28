@@ -57,7 +57,6 @@ const Users = () => {
     setLoading(true);
     try {
       const data = await authService.getUsers();
-      console.log('Usuários carregados:', data);
       setUsers(data);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
@@ -68,11 +67,11 @@ const Users = () => {
 
   const handleDialogOpen = (user = null) => {
     setEditingUser(user);
-    setFormData(user || {
-      nome: '',
-      email: '',
+    setFormData({
+      nome: user?.nome || '',
+      email: user?.email || '',
       senha: '',
-      papel: 'funcionario'
+      papel: user?.papel || 'funcionario'
     });
     setOpenDialog(true);
   };
@@ -87,12 +86,14 @@ const Users = () => {
   };
 
   const handleSave = async () => {
+    
     try {
       if (editingUser) {
-        // ⚠️ ATENÇÃO: Só pode atualizar perfil do próprio usuário via /perfil
-        // Aqui consideramos que o admin está atualizando qualquer usuário
-        showSnackbar('Atualização de outros usuários requer rota PUT /usuarios/:id no backend.', 'warning');
-        return;
+        const payload = { ...formData };
+
+        if (!payload.senha) delete payload.senha; // Não atualizar a senha se campo estiver vazio
+        await authService.updateProfile(editingUser._id, payload);
+        showSnackbar('Usuário atualizado com sucesso!', 'success');
       } else {
         await authService.register(formData);
         showSnackbar('Usuário criado com sucesso!', 'success');
@@ -106,10 +107,8 @@ const Users = () => {
   };
 
   const handleDelete = async (id) => {
-
     if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
     try {
-      console.log('Excluindo usuário com ID:', id);
       await authService.deleteUser(id);
       showSnackbar('Usuário excluído com sucesso!', 'success');
       loadUsers();
@@ -147,97 +146,104 @@ const Users = () => {
 
   return (
     <Layout>
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>Gerenciamento de Usuários</Typography>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom>Gerenciamento de Usuários</Typography>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <TextField
-          label="Buscar por nome"
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <FormControl sx={{ minWidth: 250 }}>
-          <InputLabel>Filtrar por papel</InputLabel>
-          <Select
-            value={roleFilter}
-            label="Filtrar por papel"
-            onChange={(e) => setRoleFilter(e.target.value)}
-          >
-            <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="administrador">Administrador</MenuItem>
-            <MenuItem value="funcionario">Funcionário</MenuItem>
-          </Select>
-        </FormControl>
-        <Button variant="contained" onClick={() => handleDialogOpen()}>Novo Usuário</Button>
-      </Box>
-
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Nome</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Papel</TableCell>
-                <TableCell align="right">Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUsers.map((u) => (
-                <TableRow key={u._id}>
-                  <TableCell>{u.nome}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.papel}</TableCell>
-                  <TableCell align="right">
-                    <IconButton onClick={() => handleDialogOpen(u)}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDelete(u._id)}><Delete /></IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredUsers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4}>Nenhum usuário encontrado.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField label="Nome" name="nome" value={formData.nome} onChange={handleChange} />
-          <TextField label="Email" name="email" value={formData.email} onChange={handleChange} />
-          <TextField label="Senha" name="senha" type="password" value={formData.senha} onChange={handleChange} />
-          <FormControl>
-            <InputLabel>Papel</InputLabel>
-            <Select name="papel" value={formData.papel} onChange={handleChange} label="Papel">
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <TextField
+            label="Buscar por nome"
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FormControl sx={{ minWidth: 250 }}>
+            <InputLabel>Filtrar por papel</InputLabel>
+            <Select
+              value={roleFilter}
+              label="Filtrar por papel"
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <MenuItem value="">Todos</MenuItem>
               <MenuItem value="administrador">Administrador</MenuItem>
               <MenuItem value="funcionario">Funcionário</MenuItem>
             </Select>
           </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancelar</Button>
-          <Button onClick={handleSave} variant="contained">Salvar</Button>
-        </DialogActions>
-      </Dialog>
+          <Button variant="contained" onClick={() => handleDialogOpen()}>Novo Usuário</Button>
+        </Box>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} variant="filled">
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nome</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Papel</TableCell>
+                  <TableCell align="right">Ações</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredUsers.map((u) => (
+                  <TableRow key={u._id}>
+                    <TableCell>{u.nome}</TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>{u.papel}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleDialogOpen(u)}><Edit /></IconButton>
+                      <IconButton onClick={() => handleDelete(u._id)}><Delete /></IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredUsers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4}>Nenhum usuário encontrado.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        <Dialog open={openDialog} onClose={handleDialogClose}>
+          <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField label="Nome" name="nome" value={formData.nome} onChange={handleChange} />
+            <TextField label="Email" name="email" value={formData.email} onChange={handleChange} />
+            <TextField
+              label="Senha"
+              name="senha"
+              type="password"
+              value={formData.senha}
+              onChange={handleChange}
+              placeholder={editingUser ? 'Deixe em branco para manter a senha' : ''}
+            />
+            <FormControl>
+              <InputLabel>Papel</InputLabel>
+              <Select name="papel" value={formData.papel} onChange={handleChange} label="Papel">
+                <MenuItem value="administrador">Administrador</MenuItem>
+                <MenuItem value="funcionario">Funcionário</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose}>Cancelar</Button>
+            <Button onClick={handleSave} variant="contained">Salvar</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbar.severity} variant="filled">
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
     </Layout>
   );
 };

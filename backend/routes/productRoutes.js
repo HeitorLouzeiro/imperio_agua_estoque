@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarProduto, listarProdutos, atualizarProduto, deletarProduto,buscarProdutoPorCodigo, buscarProdutoPorMarca  } from '../controllers/productController.js';
+import { criarProduto, listarProdutos, atualizarProduto, deletarProduto,buscarProdutoPorCodigo, buscarProdutoPorMarca, getById  } from '../controllers/productController.js';
 import { autenticar } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -106,6 +106,8 @@ router.post('/', autenticar, criarProduto);
 router.put('/:id', autenticar, atualizarProduto);
 router.delete('/:id', autenticar, deletarProduto);
 
+router.get('/:id', autenticar, getById);
+
 router.get('/codigo/:codigo', autenticar, buscarProdutoPorCodigo);
 /**
  * @swagger
@@ -128,6 +130,7 @@ router.get('/codigo/:codigo', autenticar, buscarProdutoPorCodigo);
  */
 
 router.get('/marca/:marca', autenticar, buscarProdutoPorMarca);
+
 /**
  * @swagger
  * /api/produtos/marca/{marca}:
