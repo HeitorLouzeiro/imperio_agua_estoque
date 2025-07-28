@@ -18,7 +18,7 @@ export const criarVenda = async (req, res) => {
 
       if (produto.quantidade < item.quantidade) {
         return res.status(400).json({
-          erro: `Estoque insuficiente para ${produto.nome}. Disponível: ${produto.quantidade}`
+          erro: `Estoque insuficiente para ${produto.nome}. Disponível Somente : ${produto.quantidade} unidade(s)`
         });
       }
 
@@ -175,12 +175,25 @@ export const atualizarVenda = async (req, res) => {
     if (!venda) {
       return res.status(404).json({ erro: 'Venda não encontrada' });
     }
-    const { cliente, itens, formaPagamento, desconto = 0, observacoes } = req.body;
+    
+    const { cliente, itens, formaPagamento, desconto, observacoes, status } = req.body;
+    
+    // Se apenas status foi enviado, atualizar apenas o status
+    if (status && Object.keys(req.body).length === 1) {
+      venda.status = status;
+      await venda.save();
+      await venda.populate(['vendedor', 'itens.produto']);
+      return res.json(venda);
+    }
+    
+    // Atualização completa da venda
     venda.cliente = cliente || venda.cliente;
     venda.itens = itens || venda.itens;
     venda.formaPagamento = formaPagamento || venda.formaPagamento;
-    venda.desconto = desconto || venda.desconto;
+    venda.desconto = desconto !== undefined ? desconto : venda.desconto;
     venda.observacoes = observacoes || venda.observacoes;
+    if (status) venda.status = status;
+    
     venda.subtotal = venda.itens.reduce((acc, item) => acc + item.subtotal, 0);
     venda.total = venda.subtotal - venda.desconto;
     await venda.save();

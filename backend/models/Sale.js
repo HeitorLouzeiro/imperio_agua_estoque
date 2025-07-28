@@ -26,7 +26,6 @@ const itemVendaSchema = new mongoose.Schema({
 const vendaSchema = new mongoose.Schema({
   numero: {
     type: String,
-    required: true,
     unique: true
   },
   cliente: {
@@ -44,7 +43,6 @@ const vendaSchema = new mongoose.Schema({
   },
   subtotal: {
     type: Number,
-    required: true,
     min: 0
   },
   desconto: {
@@ -54,7 +52,6 @@ const vendaSchema = new mongoose.Schema({
   },
   total: {
     type: Number,
-    required: true,
     min: 0
   },
   formaPagamento: {
@@ -66,7 +63,7 @@ const vendaSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['pendente', 'paga', 'cancelada'],
-    default: 'paga'
+    default: 'pendente'
   },
   observacoes: {
     type: String

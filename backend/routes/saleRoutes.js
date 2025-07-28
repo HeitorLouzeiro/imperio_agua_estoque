@@ -171,6 +171,8 @@ router.get('/:id', autenticar, obterVenda);
  */
 router.patch('/:id/cancelar', autenticar, cancelarVenda);
 
+router.patch('/:id', autenticar, atualizarVenda);
+
 router.delete('/:id', autenticar, excluirVenda);
 
 router.put('/:id', autenticar, atualizarVenda);

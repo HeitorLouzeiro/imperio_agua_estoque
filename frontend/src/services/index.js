@@ -90,7 +90,9 @@ export const salesService = {
   // Listar todas as vendas com filtros opcionais
   getAll: async (params = {}) => {
     const response = await api.get('/vendas/', { params });
-    return response.data;
+    // O backend retorna { vendas, totalPaginas, paginaAtual, total }
+    // Retornamos apenas o array de vendas
+    return response.data.vendas || response.data;
   },
 
   // Obter uma venda específica por ID
@@ -116,6 +118,18 @@ export const salesService = {
   // Excluir venda
   delete: async (id) => {
     const response = await api.delete(`/vendas/${id}`);
+    return response.data;
+  },
+
+  // Atualizar status da venda
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/vendas/${id}`, { status });
+    return response.data;
+  },
+
+  // Atualizar status da venda
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/vendas/${id}`, { status });
     return response.data;
   },
 
