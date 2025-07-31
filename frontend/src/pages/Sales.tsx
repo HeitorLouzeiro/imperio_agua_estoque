@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -15,7 +15,6 @@ import {
   Alert,
   Snackbar,
   Card,
-  CardContent,
   InputAdornment,
   Autocomplete,
   Divider,
@@ -25,7 +24,7 @@ import {
   ListItemSecondaryAction,
   Tooltip,
 } from '@mui/material';
-import { DataGrid, GridSearchIcon } from '@mui/x-data-grid';
+import { DataGrid, GridSearchIcon, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -38,20 +37,29 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { salesService, productService } from '../services';
 import Layout from '../components/common/Layout';
+import { 
+  Sale, 
+  Product, 
+  SaleItem, 
+  SaleFormData, 
+  SaleStatistics, 
+  CreateSalePayload,
+  SnackbarState 
+} from '../types';
 
 const Sales = () => {
-  const [sales, setSales] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [selectedSale, setSelectedSale] = useState(null);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [newStatus, setNewStatus] = useState('');
-  const [statistics, setStatistics] = useState({
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [open, setOpen] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+  const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
+  const [newStatus, setNewStatus] = useState<string>('');
+  const [statistics, setStatistics] = useState<SaleStatistics>({
     totalVendas: 0,
     vendasHoje: 0,
     receitaTotal: 0,
@@ -61,30 +69,64 @@ const Sales = () => {
   });
 
   // Dados para nova venda
-  const [saleData, setSaleData] = useState({
+  const [saleData, setSaleData] = useState<SaleFormData>({
     cliente: '',
     data: new Date(),
     observacoes: '',
     formaPagamento: 'dinheiro',
     desconto: 0,
   });
-  const [saleItems, setSaleItems] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-
-  useEffect(() => {
-    loadSales();
-    loadProducts();
-  }, []);
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
 
   // Carregar vendas da API
-  const loadSales = async () => {
+  const loadSales = useCallback(async () => {
     try {
       setLoading(true);
       const response = await salesService.getAll();
+      
       const salesWithId = response.map(sale => ({
         ...sale,
         id: sale._id || sale.id,
+        // Garantir que os itens tenham os nomes dos produtos
+        itens: sale.itens?.map(item => {
+          // A estrutura do backend populado: item.produto pode ser um objeto com dados completos
+          let nomeItem = 'Produto';
+          let codigoItem = '';
+          
+          // Verificar se item.produto está populado (é um objeto)
+          if (item.produto && typeof item.produto === 'object' && 'nome' in item.produto) {
+            const produto = item.produto as Product;
+            nomeItem = produto.nome || produto.name || 'Produto';
+            codigoItem = produto.codigo || '';
+          }
+          // Fallback: Se não está populado, tentar buscar pelo ID nos produtos carregados
+          else if (typeof item.produto === 'string' && products.length > 0) {
+            const produtoEncontrado = products.find(p => 
+              (p.id === item.produto) || (p._id === item.produto)
+            );
+            if (produtoEncontrado) {
+              nomeItem = produtoEncontrado.nome || produtoEncontrado.name || 'Produto';
+              codigoItem = produtoEncontrado.codigo || '';
+            }
+          }
+          
+          return {
+            ...item,
+            nome: nomeItem,
+            produto: item.produto,
+            // Manter a estrutura original do produto populado
+            product: {
+              nome: nomeItem,
+              name: nomeItem,
+              codigo: codigoItem,
+              id: typeof item.produto === 'object' && 'id' in item.produto ? 
+                  item.produto.id || item.produto._id : 
+                  item.produto
+            }
+          };
+        }) || []
       }));
       setSales(salesWithId);
       calculateStatistics(salesWithId);
@@ -93,10 +135,10 @@ const Sales = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [products]);
 
   // Carregar produtos da API
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const response = await productService.getAll();
       const productsWithId = response.map(prod => ({
@@ -107,14 +149,24 @@ const Sales = () => {
     } catch (error) {
       showSnackbar('Erro ao carregar produtos', 'error');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      loadSales();
+    }
+  }, [loadSales, products]);
 
   // Calcular estatísticas das vendas
-  const calculateStatistics = (salesData) => {
+  const calculateStatistics = (salesData: Sale[]) => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     
-    const stats = {
+    const stats: SaleStatistics = {
       totalVendas: salesData.length,
       vendasHoje: 0,
       receitaTotal: 0,
@@ -123,11 +175,14 @@ const Sales = () => {
       produtoMaisVendido: null
     };
 
-    const produtosCount = {};
+    const produtosCount: { [key: string]: { quantidade: number; codigo?: string; nome: string } } = {};
 
     salesData.forEach(sale => {
       // Contar vendas por status
-      stats.vendasPorStatus[sale.status] = (stats.vendasPorStatus[sale.status] || 0) + 1;
+      const status = sale.status || 'paga';
+      if (status in stats.vendasPorStatus) {
+        stats.vendasPorStatus[status as keyof typeof stats.vendasPorStatus]++;
+      }
       
       // Receita total
       stats.receitaTotal += sale.total || 0;
@@ -144,17 +199,49 @@ const Sales = () => {
       // Contar produtos mais vendidos APENAS para vendas PAGAS
       if (sale.status === 'paga') {
         sale.itens?.forEach(item => {
-          const produtoNome = item.produto?.nome || 'Produto desconhecido';
-          produtosCount[produtoNome] = (produtosCount[produtoNome] || 0) + item.quantidade;
+          let produtoNome = 'Produto desconhecido';
+          let produtoCodigo = '';
+          
+          // Verificar se o produto foi populado corretamente no item.produto
+          if (item.produto && typeof item.produto === 'object' && 'nome' in item.produto) {
+            const produto = item.produto as Product;
+            produtoNome = produto.nome || produto.name || 'Produto desconhecido';
+            produtoCodigo = produto.codigo || '';
+          }
+          // Se não, usar dados processados no item.product
+          else if (item.product && typeof item.product === 'object') {
+            produtoNome = item.product.nome || item.product.name || 'Produto desconhecido';
+            produtoCodigo = item.product.codigo || '';
+          }
+          // Se não, usar o nome direto do item
+          else if (item.nome && item.nome !== 'Produto') {
+            produtoNome = item.nome;
+          }
+          
+          // Só contar se temos um nome válido
+          if (produtoNome && produtoNome !== 'Produto desconhecido' && produtoNome !== 'Produto') {
+            if (!produtosCount[produtoNome]) {
+              produtosCount[produtoNome] = {
+                quantidade: 0,
+                codigo: produtoCodigo,
+                nome: produtoNome
+              };
+            }
+            produtosCount[produtoNome].quantidade += item.quantidade || 0;
+          }
         });
       }
     });
 
     // Encontrar produto mais vendido
     const produtoMaisVendido = Object.entries(produtosCount).reduce(
-      (max, [produto, quantidade]) => 
-        quantidade > max.quantidade ? { nome: produto, quantidade } : max,
-      { nome: null, quantidade: 0 }
+      (max, [nomeProduto, dados]) => 
+        dados.quantidade > max.quantidade ? { 
+          nome: dados.nome, 
+          quantidade: dados.quantidade,
+          codigo: dados.codigo || 'S/C'
+        } : max,
+      { nome: '', quantidade: 0, codigo: '' }
     );
 
     stats.produtoMaisVendido = produtoMaisVendido.nome ? produtoMaisVendido : null;
@@ -176,7 +263,7 @@ const Sales = () => {
   });
 
   // Mostrar Snackbar
-  const showSnackbar = (message, severity = 'success') => {
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
@@ -214,10 +301,10 @@ const Sales = () => {
         ...saleItems,
         {
           produto: selectedProduct.id,
-          nome: selectedProduct.nome,
+          nome: selectedProduct.nome || selectedProduct.name || 'Produto',
           quantidade: quantity,
-          precoUnitario: selectedProduct.preco,
-          subtotal: selectedProduct.preco * quantity,
+          precoUnitario: selectedProduct.preco || selectedProduct.price || 0,
+          subtotal: (selectedProduct.preco || selectedProduct.price || 0) * quantity,
         },
       ]);
     }
@@ -227,7 +314,7 @@ const Sales = () => {
   };
 
   // Remover item da venda
-  const handleRemoveItem = (index) => {
+  const handleRemoveItem = (index: number) => {
     setSaleItems(saleItems.filter((_, i) => i !== index));
   };
 
@@ -251,23 +338,25 @@ const Sales = () => {
       return;
     }
     try {
-      const payload = {
+      const payload: CreateSalePayload = {
         cliente: saleData.cliente,
         formaPagamento: saleData.formaPagamento,
         desconto: saleData.desconto || 0,
         observacoes: saleData.observacoes,
         itens: saleItems.map(item => ({
-          produto: item.produto,            // ID do produto
+          produto: (typeof item.produto === 'object' && 'id' in item.produto ? 
+                   (item.produto.id || item.produto._id) : 
+                   item.produto) as string | number,            // ID do produto
           quantidade: item.quantidade
           // precoUnitario e subtotal serão calculados no backend
         }))
       };
 
-      await salesService.create(payload);
+      await salesService.create(payload as any);
       showSnackbar('Venda registrada com sucesso!', 'success');
       setOpen(false);
       loadSales(); // Isso irá recalcular as estatísticas também
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar venda:', error.response?.data || error.message);
       
       // Verificar se é um erro de estoque insuficiente
@@ -282,24 +371,24 @@ const Sales = () => {
   };
 
   // Visualizar detalhes da venda
-  const handleViewSale = (sale) => {
+  const handleViewSale = (sale: Sale) => {
     setSelectedSale(sale);
     setViewDialogOpen(true);
   };
 
   // Imprimir recibo
-  const handlePrintReceipt = (sale) => {
+  const handlePrintReceipt = (sale: Sale) => {
     const printWindow = window.open('', '_blank');
-    const receiptHTML = generateReceiptHTML(sale);
-    printWindow.document.write(receiptHTML);
-    printWindow.document.close();
-    printWindow.print();
+    if (printWindow) {
+      const receiptHTML = generateReceiptHTML(sale);
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   // Compartilhar recibo
-  const handleShareReceipt = async (sale) => {
-    const receiptHTML = generateReceiptHTML(sale);
-    
+  const handleShareReceipt = async (sale: Sale) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -317,7 +406,7 @@ const Sales = () => {
   };
 
   // Copiar recibo para área de transferência
-  const copyReceiptToClipboard = (sale) => {
+  const copyReceiptToClipboard = (sale: Sale) => {
     const receiptText = generateReceiptText(sale);
     navigator.clipboard.writeText(receiptText).then(() => {
       showSnackbar('Recibo copiado para a área de transferência!', 'success');
@@ -327,10 +416,12 @@ const Sales = () => {
   };
 
   // Gerar texto do recibo para compartilhamento
-  const generateReceiptText = (sale) => {
-    const itensText = sale.itens?.map(item => 
-      `${item.produto?.nome || 'Produto'} - Qtd: ${item.quantidade} - R$ ${item.precoUnitario?.toFixed(2)} = R$ ${item.subtotal?.toFixed(2)}`
-    ).join('\n') || '';
+  const generateReceiptText = (sale: Sale) => {
+    const itensText = sale.itens?.map(item => {
+      const nomeProduto = item.product?.nome || item.product?.name || item.nome || 'Produto';
+      const codigoProduto = item.product?.codigo ? ` (${item.product.codigo})` : '';
+      return `${nomeProduto}${codigoProduto} - Qtd: ${item.quantidade} - R$ ${item.precoUnitario?.toFixed(2)} = R$ ${item.subtotal?.toFixed(2)}`;
+    }).join('\n') || '';
 
     return `
 🧾 RECIBO - IMPÉRIO ÁGUA
@@ -357,15 +448,19 @@ Obrigado pela preferência! 🙏
   };
 
   // Gerar HTML do recibo
-  const generateReceiptHTML = (sale) => {
-    const itensHTML = sale.itens?.map(item => `
+  const generateReceiptHTML = (sale: Sale) => {
+    const itensHTML = sale.itens?.map(item => {
+      const nomeProduto = item.product?.nome || item.product?.name || item.nome || 'Produto';
+      const codigoProduto = item.product?.codigo ? ` (${item.product.codigo})` : '';
+      return `
       <tr>
-        <td>${item.produto?.nome || 'Produto'}</td>
+        <td>${nomeProduto}${codigoProduto}</td>
         <td>${item.quantidade}</td>
         <td>R$ ${item.precoUnitario?.toFixed(2) || '0.00'}</td>
         <td>R$ ${item.subtotal?.toFixed(2) || '0.00'}</td>
       </tr>
-    `).join('') || '';
+    `;
+    }).join('') || '';
 
     return `
       <!DOCTYPE html>
@@ -467,33 +562,38 @@ Obrigado pela preferência! 🙏
   };
 
   // Alterar status da venda
-  const handleChangeStatus = (sale) => {
+  const handleChangeStatus = (sale: Sale) => {
     setSelectedSale(sale);
-    setNewStatus(sale.status);
+    setNewStatus(sale.status || 'paga');
     setStatusDialogOpen(true);
   };
 
   // Salvar novo status
   const handleSaveStatus = async () => {
+    if (!selectedSale) return;
     try {
-      await salesService.updateStatus(selectedSale.id, newStatus);
+      // Use o ID original sem conversão, pois o backend espera ObjectId (string)
+      const saleId = selectedSale._id || selectedSale.id;
+      await salesService.updateStatus(saleId, newStatus);
       showSnackbar('Status atualizado com sucesso!', 'success');
       setStatusDialogOpen(false);
       loadSales(); // Isso irá recalcular as estatísticas também
-    } catch (error) {
-      showSnackbar('Erro ao atualizar status', 'error');
+    } catch (error: any) {
+      console.error('Erro ao atualizar status:', error);
+      const errorMessage = error.response?.data?.erro || error.response?.data?.message || 'Erro ao atualizar status';
+      showSnackbar(errorMessage, 'error');
     }
   };
 
   // Colunas para DataGrid
-  const columns = [
+  const columns: GridColDef[] = [
     { field: 'cliente', headerName: 'Cliente', width: 200 },
     {
       field: 'dataVenda',
       headerName: 'Data',
       width: 130,
       valueGetter: (params) => params.row.dataVenda || params.row.data,
-      renderCell: (params) => {
+      renderCell: (params: GridRenderCellParams) => {
         const date = params.value ? new Date(params.value) : null;
         return date ? date.toLocaleDateString('pt-BR') : '';
       },
@@ -502,7 +602,7 @@ Obrigado pela preferência! 🙏
       field: 'total',
       headerName: 'Total',
       width: 130,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2" fontWeight="bold" color="success.main">
           R$ {params.value?.toFixed(2)}
         </Typography>
@@ -512,7 +612,7 @@ Obrigado pela preferência! 🙏
       field: 'status',
       headerName: 'Status',
       width: 130,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value || 'paga'}
           color={params.value === 'paga' ? 'success' : params.value === 'pendente' ? 'warning' : 'error'}
@@ -527,7 +627,7 @@ Obrigado pela preferência! 🙏
       headerName: 'Ações',
       width: 180,
       sortable: false,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box>
           <Tooltip title="Ver Detalhes">
             <IconButton size="small" onClick={() => handleViewSale(params.row)}>
@@ -629,9 +729,13 @@ Obrigado pela preferência! 🙏
             rows={filteredSales}
             columns={columns}
             loading={loading}
-            pageSize={8}
-            rowsPerPageOptions={[8, 16]}
-            disableSelectionOnClick
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 8, page: 0 },
+              },
+            }}
+            pageSizeOptions={[8, 16]}
+            disableRowSelectionOnClick
             getRowId={(row) => row.id}
           />
         </Paper>
@@ -746,6 +850,9 @@ Obrigado pela preferência! 🙏
                     <Typography variant="h6" fontWeight="bold" sx={{ mt: 1 }}>
                       {statistics.produtoMaisVendido.nome}
                     </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      Código: {statistics.produtoMaisVendido.codigo}
+                    </Typography>
                   </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
@@ -817,6 +924,7 @@ Obrigado pela preferência! 🙏
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
                   inputProps={{ min: 1 }}
+                  placeholder="1"
                 />
               </Grid>
               <Grid item xs={6} md={2} display="flex" alignItems="center">
@@ -863,9 +971,10 @@ Obrigado pela preferência! 🙏
                       type="number"
                       size="small"
                       sx={{ mt: 1, width: 150 }}
-                      value={saleData.desconto}
+                      value={saleData.desconto || ''}
                       onChange={(e) => setSaleData({ ...saleData, desconto: Number(e.target.value) || 0 })}
                       inputProps={{ min: 0 }}
+                      placeholder="0.00"
                     />
                     <Typography variant="h6" fontWeight="bold" sx={{ mt: 1 }}>
                       Total: R$ {calculateTotal().toFixed(2)}
@@ -984,7 +1093,21 @@ Obrigado pela preferência! 🙏
                     {selectedSale.itens?.map((item, index) => (
                       <ListItem key={index} divider>
                         <ListItemText
-                          primary={`${item.produto?.nome || 'Produto'} - Quantidade: ${item.quantidade}`}
+                          primary={
+                            <Box>
+                              <Typography variant="body1" fontWeight="bold">
+                                {(typeof item.produto === 'object' && 'nome' in item.produto ? item.produto.nome : null) || 
+                                 item.product?.name || 
+                                 item.nome || 
+                                 'Produto'} - Quantidade: {item.quantidade}
+                              </Typography>
+                              {(item.product?.codigo) && (
+                                <Typography variant="body2" color="text.secondary">
+                                  Código: {item.product.codigo}
+                                </Typography>
+                              )}
+                            </Box>
+                          }
                           secondary={`Preço Unitário: R$ ${item.precoUnitario?.toFixed(2) || '0.00'} | Subtotal: R$ ${item.subtotal?.toFixed(2) || '0.00'}`}
                         />
                       </ListItem>

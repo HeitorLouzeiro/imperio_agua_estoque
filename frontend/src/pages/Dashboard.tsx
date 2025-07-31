@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import {
   Box,
   Grid,
@@ -33,8 +33,6 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   XAxis,
@@ -46,11 +44,53 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { productService, salesService } from '../services';
 import Layout from '../components/common/Layout';
 
-const Dashboard = () => {
-  const [stats, setStats] = useState({
+interface Sale {
+  id: number;
+  cliente: string;
+  valor: number;
+  data: string;
+}
+
+interface ProductLowStock {
+  id: number;
+  nome: string;
+  estoque: number;
+}
+
+interface Stats {
+  totalProducts: number;
+  totalSales: number;
+  totalUsers: number;
+  totalRevenue: number;
+  lowStockProducts: ProductLowStock[];
+  recentSales: Sale[];
+}
+
+interface SalesChartData {
+  name: string;
+  vendas: number;
+  produtos: number;
+}
+
+interface PieChartData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: ReactNode;
+  color: string;
+  trend?: 'up' | 'down';
+  trendValue?: number;
+}
+
+const Dashboard: React.FC = () => {
+  const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     totalSales: 0,
     totalUsers: 0,
@@ -58,11 +98,10 @@ const Dashboard = () => {
     lowStockProducts: [],
     recentSales: [],
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
-  // Dados fictícios para demonstração
-  const salesData = [
+  const salesData: SalesChartData[] = [
     { name: 'Jan', vendas: 4000, produtos: 2400 },
     { name: 'Fev', vendas: 3000, produtos: 1398 },
     { name: 'Mar', vendas: 2000, produtos: 9800 },
@@ -71,7 +110,7 @@ const Dashboard = () => {
     { name: 'Jun', vendas: 2390, produtos: 3800 },
   ];
 
-  const pieData = [
+  const pieData: PieChartData[] = [
     { name: 'Água 500ml', value: 400, color: '#0088FE' },
     { name: 'Água 1L', value: 300, color: '#00C49F' },
     { name: 'Água 2L', value: 200, color: '#FFBB28' },
@@ -85,23 +124,22 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // Simular carregamento de dados
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setStats({
         totalProducts: 156,
         totalSales: 1247,
         totalUsers: 8,
-        totalRevenue: 45678.90,
+        totalRevenue: 45678.9,
         lowStockProducts: [
           { id: 1, nome: 'Água Crystal 500ml', estoque: 5 },
           { id: 2, nome: 'Água Pura 1L', estoque: 8 },
           { id: 3, nome: 'Galão 20L Premium', estoque: 3 },
         ],
         recentSales: [
-          { id: 1, cliente: 'João Silva', valor: 125.50, data: '2024-01-15' },
-          { id: 2, cliente: 'Maria Santos', valor: 89.90, data: '2024-01-15' },
-          { id: 3, cliente: 'Pedro Costa', valor: 234.70, data: '2024-01-14' },
+          { id: 1, cliente: 'João Silva', valor: 125.5, data: '2024-01-15' },
+          { id: 2, cliente: 'Maria Santos', valor: 89.9, data: '2024-01-15' },
+          { id: 3, cliente: 'Pedro Costa', valor: 234.7, data: '2024-01-14' },
         ],
       });
     } catch (err) {
@@ -111,7 +149,7 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon, color, trend, trendValue }) => (
+  const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend, trendValue }) => (
     <Card
       sx={{
         height: '100%',
@@ -134,18 +172,17 @@ const Dashboard = () => {
             <MoreVert />
           </IconButton>
         </Box>
-        
+
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          {typeof value === 'number' && title.includes('Receita') 
+          {typeof value === 'number' && title.includes('Receita')
             ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-            : value?.toLocaleString?.('pt-BR') || value
-          }
+            : value.toLocaleString?.('pt-BR') || value}
         </Typography>
-        
+
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {title}
         </Typography>
-        
+
         {trend && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {trend === 'up' ? (
@@ -153,8 +190,8 @@ const Dashboard = () => {
             ) : (
               <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
             )}
-            <Typography 
-              variant="caption" 
+            <Typography
+              variant="caption"
               color={trend === 'up' ? 'success.main' : 'error.main'}
               fontWeight="medium"
             >
@@ -179,7 +216,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <Box>
+       <Box>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>

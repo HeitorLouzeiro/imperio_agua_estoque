@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, ChangeEvent, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -15,45 +16,50 @@ import {
   Select,
   InputLabel,
   FormControl,
-  CircularProgress,
   Paper,
   Grid,
   Chip,
   InputAdornment,
-  Tooltip
+  Tooltip,
+  SelectChangeEvent
 } from '@mui/material';
-import { DataGrid, GridSearchIcon } from '@mui/x-data-grid';
+import { DataGrid, GridSearchIcon, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Edit, Delete, Add as AddIcon, Person as PersonIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/index';
 import Layout from '../components/common/Layout';
+import { User, SnackbarState, UserFormData } from '../types';
 
 const Users = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const hasAccess = isAdmin();
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  // Debug logs
+  console.log('User data:', user);
+  console.log('User role:', user?.role);
+  console.log('User papel:', user?.papel);
+  console.log('isAdmin result:', hasAccess);
 
-  const [formData, setFormData] = useState({
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('');
+  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+
+  const [formData, setFormData] = useState<UserFormData>({
     nome: '',
     email: '',
     senha: '',
     papel: 'funcionario'
   });
 
-  useEffect(() => {
-    if (hasAccess) {
-      loadUsers();
-    }
-  }, [hasAccess]);
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
+    setSnackbar({ open: true, message, severity });
+  };
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await authService.getUsers();
@@ -68,9 +74,15 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleDialogOpen = (user = null) => {
+  useEffect(() => {
+    if (hasAccess) {
+      loadUsers();
+    }
+  }, [hasAccess, loadUsers]);
+
+  const handleDialogOpen = (user: User | null = null) => {
     setEditingUser(user);
     setFormData({
       nome: user?.nome || '',
@@ -86,19 +98,36 @@ const Users = () => {
     setEditingUser(null);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<'administrador' | 'funcionario'>) => {
+    setFormData({ ...formData, [e.target.name as string]: e.target.value });
   };
 
   const handleSave = async () => {
     try {
       if (editingUser) {
-        const payload = { ...formData };
-        if (!payload.senha) delete payload.senha; // Não atualizar a senha se campo estiver vazio
-        await authService.updateProfile(editingUser._id, payload);
+        const payload: any = { ...formData };
+        if (!payload.senha) {
+          delete payload.senha; // Não atualizar a senha se campo estiver vazio
+        }
+        const userId = typeof editingUser.id === 'string' ? parseInt(editingUser.id) : editingUser.id;
+        await authService.updateProfile(userId, payload);
         showSnackbar('Usuário atualizado com sucesso!', 'success');
       } else {
-        await authService.register(formData);
+        // Converter formData para o formato esperado pelo backend
+        const createUserData = {
+          name: formData.nome,
+          nome: formData.nome,
+          email: formData.email,
+          password: formData.senha,
+          senha: formData.senha,
+          role: formData.papel,
+          papel: formData.papel
+        };
+        await authService.register(createUserData);
         showSnackbar('Usuário criado com sucesso!', 'success');
       }
       loadUsers();
@@ -109,19 +138,16 @@ const Users = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string | number) => {
     if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
     try {
-      await authService.deleteUser(id);
+      const userId = typeof id === 'string' ? parseInt(id) : id;
+      await authService.deleteUser(userId);
       showSnackbar('Usuário excluído com sucesso!', 'success');
       loadUsers();
     } catch (error) {
       showSnackbar('Erro ao excluir usuário.', 'error');
     }
-  };
-
-  const showSnackbar = (message, severity) => {
-    setSnackbar({ open: true, message, severity });
   };
 
   const handleSnackbarClose = () => {
@@ -138,12 +164,12 @@ const Users = () => {
   });
 
   // Colunas para DataGrid
-  const columns = [
+  const columns: GridColDef[] = [
     { 
       field: 'nome', 
       headerName: 'Nome', 
       width: 200,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
           <Typography variant="body2">{params.value}</Typography>
@@ -159,7 +185,7 @@ const Users = () => {
       field: 'papel',
       headerName: 'Papel',
       width: 150,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value === 'administrador' ? 'Admin' : 'Funcionário'}
           color={params.value === 'administrador' ? 'primary' : 'default'}
@@ -172,7 +198,7 @@ const Users = () => {
       field: 'createdAt',
       headerName: 'Criado em',
       width: 130,
-      renderCell: (params) => {
+      renderCell: (params: GridRenderCellParams) => {
         const date = params.value ? new Date(params.value) : null;
         return date ? date.toLocaleDateString('pt-BR') : '';
       },
@@ -182,7 +208,7 @@ const Users = () => {
       headerName: 'Ações',
       width: 120,
       sortable: false,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box>
           <Tooltip title="Editar Usuário">
             <IconButton size="small" onClick={() => handleDialogOpen(params.row)}>
@@ -295,9 +321,13 @@ const Users = () => {
             rows={filteredUsers}
             columns={columns}
             loading={loading}
-            pageSize={8}
-            rowsPerPageOptions={[8, 16]}
-            disableSelectionOnClick
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 8, page: 0 },
+              },
+            }}
+            pageSizeOptions={[8, 16]}
+            disableRowSelectionOnClick
             getRowId={(row) => row.id}
             localeText={{
               noRowsLabel: 'Nenhum usuário encontrado',
@@ -353,7 +383,7 @@ const Users = () => {
                   <Select 
                     name="papel" 
                     value={formData.papel} 
-                    onChange={handleChange} 
+                    onChange={handleSelectChange} 
                     label="Papel"
                   >
                     <MenuItem value="administrador">Administrador</MenuItem>

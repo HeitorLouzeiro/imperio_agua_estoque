@@ -12,6 +12,7 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
+  Badge,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -19,29 +20,32 @@ import {
   Settings,
   Logout,
   Notifications,
-  Badge,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
-const Header = ({ onDrawerToggle }) => {
-  const { user, logout } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+interface HeaderProps {
+  onDrawerToggle: () => void;
+}
 
-  const handleMenuOpen = (event) => {
+const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
+  const { user, logout } = useAuth();
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
+  const handleMenuClose = (): void => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     handleMenuClose();
     logout();
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1  , borderRadius:0}}>
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, borderRadius: 0 }}>
       <Toolbar>
         <IconButton
           color="inherit"
@@ -69,7 +73,7 @@ const Header = ({ onDrawerToggle }) => {
             color="inherit"
             startIcon={
               <Avatar sx={{ width: 32, height: 32 }}>
-                {user?.nome?.charAt(0) || 'U'}
+                {(user as any)?.nome?.charAt(0) || 'U'}
               </Avatar>
             }
             sx={{
@@ -80,7 +84,7 @@ const Header = ({ onDrawerToggle }) => {
               },
             }}
           >
-            {user?.nome || 'Usuário'}
+            {(user as any)?.nome || 'Usuário'}
           </Button>
 
           <Menu

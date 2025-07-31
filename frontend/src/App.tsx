@@ -18,7 +18,7 @@ import Sales from './pages/Sales';
 import Users from './pages/Users';
 
 // Componente para redirecionamento baseado na autenticação
-const AuthRedirect = () => {
+const AuthRedirect: React.FC = () => {
   const { isAuthenticated } = useAuth();
   
   if (isAuthenticated) {
@@ -28,7 +28,7 @@ const AuthRedirect = () => {
   return <Navigate to="/login" replace />;
 };
 
-function App() {
+const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -46,7 +46,7 @@ function App() {
               <Route
                 path="/*"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole={undefined}>
                     <Layout>
                       <Routes>
                         <Route path="/dashboard" element={<Dashboard />} />
@@ -76,7 +76,6 @@ function App() {
       </LocalizationProvider>
     </ThemeProvider>
   );
-}
-
+};
 
 export default App;

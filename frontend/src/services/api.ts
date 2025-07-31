@@ -1,14 +1,14 @@
-import axios from 'axios';
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 // Configuração base do axios
 const api = axios.create({
-  baseURL:'http://localhost:5000/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
 });
 
 // Interceptor para adicionar token automaticamente
 api.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -20,7 +20,7 @@ api.interceptors.request.use(
 
 // Interceptor para tratar respostas
 api.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');

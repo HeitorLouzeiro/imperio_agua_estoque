@@ -17,7 +17,6 @@ import {
   Inventory,
   ShoppingCart,
   People,
-  Analytics,
   Settings,
   Store,
 } from '@mui/icons-material';
@@ -26,7 +25,19 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 280;
 
-const menuItems = [
+interface MenuItem {
+  text: string;
+  icon: React.ReactElement;
+  path: string;
+  roles: string[];
+}
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onDrawerToggle: () => void;
+}
+
+const menuItems: MenuItem[] = [
   {
     text: 'Dashboard',
     icon: <Dashboard />,
@@ -51,16 +62,15 @@ const menuItems = [
     path: '/users',
     roles: ['administrador'],
   },
-
 ];
 
-const Sidebar = ({ mobileOpen, onDrawerToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const filteredMenuItems = menuItems.filter(item =>
-    item.roles.includes(user?.tipo || 'funcionario')
+    item.roles.includes((user as any)?.tipo || 'funcionario')
   );
 
   const drawer = (

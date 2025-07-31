@@ -28,22 +28,33 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const Login = () => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  email: string;
+  senha: string;
+}
+
+interface Feature {
+  icon: React.ReactElement;
+  title: string;
+  description: string;
+}
+
+const Login: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     senha: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -51,7 +62,7 @@ const Login = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -61,7 +72,7 @@ const Login = () => {
       if (result.success) {
         navigate(from, { replace: true });
       } else {
-        setError(result.message);
+        setError(result.message || 'Erro ao fazer login');
       }
     } catch (err) {
       setError('Erro interno do servidor. Tente novamente.');
@@ -70,7 +81,7 @@ const Login = () => {
     }
   };
 
-  const features = [
+  const features: Feature[] = [
     {
       icon: <Store sx={{ fontSize: 40 }} />,
       title: 'Gestão Completa',
@@ -237,7 +248,6 @@ const Login = () => {
                         fullWidth
                         variant="contained"
                         size="large"
-                        loading={loading}
                         disabled={loading}
                         sx={{
                           py: 1.5,

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "esnext",                        // atualizado para melhor suporte moderno
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,                          // desative se estiver usando apenas TS
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": "src",                          // facilita importações relativas
+    "paths": {
+      "@contexts/*": ["contexts/*"],           // exemplo útil para importações
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
+      "@services/*": ["services/*"],
+      "@types/*": ["types/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

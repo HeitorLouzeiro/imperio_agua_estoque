@@ -1,12 +1,16 @@
-import React from 'react';
-import { Box, Toolbar } from '@mui/material';
+import React, { ReactNode } from 'react';
+import { Box } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-const Layout = ({ children }) => {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const handleDrawerToggle = () => {
+  const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
   };
 
@@ -31,8 +35,6 @@ const Layout = ({ children }) => {
           mt: '64px', // Altura da AppBar
         }}
       >
-
-
         {children}
       </Box>
     </Box>

@@ -62,7 +62,7 @@ export const criarVenda = async (req, res) => {
 // Listar todas as vendas
 export const listarVendas = async (req, res) => {
   try {
-    const { page = 1, limit = 10, dataInicio, dataFim, cliente, status } = req.query;
+    const { page, limit = 100, dataInicio, dataFim, cliente, status } = req.query;
 
     const filtros = {};
 
@@ -80,10 +80,19 @@ export const listarVendas = async (req, res) => {
       filtros.status = status;
     }
 
-    const vendas = await Sale.find(filtros)
+    let query = Sale.find(filtros)
       .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo')
-      .sort({ dataVenda: -1 })
+      .populate('itens.produto', 'nome codigo marca preco')
+      .sort({ dataVenda: -1 });
+
+    // Se não foi especificada paginação, retornar todas as vendas
+    if (!page) {
+      const vendas = await query.limit(limit * 1);
+      return res.json(vendas);
+    }
+
+    // Caso contrário, usar paginação
+    const vendas = await query
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
@@ -105,7 +114,7 @@ export const obterVenda = async (req, res) => {
   try {
     const venda = await Sale.findById(req.params.id)
       .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo preco');
+      .populate('itens.produto', 'nome codigo preco marca quantidade');
 
     if (!venda) {
       return res.status(404).json({ erro: 'Venda não encontrada' });
