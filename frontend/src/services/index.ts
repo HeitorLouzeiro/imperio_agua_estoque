@@ -8,8 +8,8 @@ import {
   UpdateUserRequest,
   CreateProductRequest, 
   UpdateProductRequest,
-  CreateSaleRequest,
   UpdateSaleRequest,
+  CreateSalePayload,
   ApiResponse 
 } from '../types';
 
@@ -133,7 +133,7 @@ export const salesService = {
   },
 
   // Criar uma nova venda
-  create: async (saleData: CreateSaleRequest): Promise<Sale> => {
+  create: async (saleData: CreateSalePayload): Promise<Sale> => {
     console.log('Dados da venda:', saleData); // Debugging
     const response = await api.post('/vendas/criar', saleData);
     console.log('Resposta da criação de venda:', response); // Debugging
