@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "create-test-users": "node createTestUsers.js"
+    "create-test-users": "node createTestUsers.js",
+    "migrate": "node migrations/001_add_ativo_field.js",
+    "seed": "node seedData.js",
+    "demo-soft-delete": "node demo-soft-delete.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

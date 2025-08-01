@@ -136,16 +136,16 @@ export const useUserManagement = (): UseUserManagementReturn => {
     }
   };
 
-  // Excluir usuário
+  // Excluir usuário (soft delete)
   const handleDelete = async (id: string | number) => {
-    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
+    if (!window.confirm('Tem certeza que deseja desativar este usuário?\n\nO usuário ficará inativo mas seu histórico será preservado.')) return;
     try {
       const userId = typeof id === 'string' ? parseInt(id) : id;
       await authService.deleteUser(userId);
-      showSnackbar('Usuário excluído com sucesso!', 'success');
+      showSnackbar('Usuário desativado com sucesso!', 'success');
       loadUsers();
     } catch (error) {
-      showSnackbar('Erro ao excluir usuário.', 'error');
+      showSnackbar('Erro ao desativar usuário.', 'error');
     }
   };
 

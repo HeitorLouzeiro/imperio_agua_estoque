@@ -12,7 +12,7 @@ export const criarProduto = async (req, res) => {
 
 export const listarProdutos = async (req, res) => {
   try {
-    const produtos = await Product.find();
+    const produtos = await Product.find({ ativo: true });
     res.json(produtos);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -31,9 +31,13 @@ export const atualizarProduto = async (req, res) => {
 
 export const deletarProduto = async (req, res) => {
   try {
-    const produto = await Product.findByIdAndDelete(req.params.id);
+    const produto = await Product.findByIdAndUpdate(
+      req.params.id, 
+      { ativo: false }, 
+      { new: true }
+    );
     if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
-    res.json({ mensagem: 'Produto removido' });
+    res.json({ mensagem: 'Produto desativado com sucesso' });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -45,7 +49,7 @@ export const buscarProdutoPorCodigo = async (req, res) => {
     if (!codigo) {
       return res.status(400).json({ erro: 'Informe o código para buscar' });
     }
-    const produto = await Product.findOne({ codigo });
+    const produto = await Product.findOne({ codigo, ativo: true });
     if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
     res.json(produto);
   } catch (err) {
@@ -55,7 +59,7 @@ export const buscarProdutoPorCodigo = async (req, res) => {
 
 export const getById = async (req, res) => {
   try {
-    const produto = await Product.findById(req.params.id);
+    const produto = await Product.findOne({ _id: req.params.id, ativo: true });
     if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
     res.json(produto);
   } catch (err) {
@@ -69,9 +73,32 @@ export const buscarProdutoPorMarca = async (req, res) => {
     if (!marca) {
       return res.status(400).json({ erro: 'Informe a marca para buscar' });
     }
-    const produto = await Product.findOne({ marca });
+    const produto = await Product.findOne({ marca, ativo: true });
     if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
     res.json(produto);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+};
+
+export const reativarProduto = async (req, res) => {
+  try {
+    const produto = await Product.findByIdAndUpdate(
+      req.params.id, 
+      { ativo: true }, 
+      { new: true }
+    );
+    if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
+    res.json({ mensagem: 'Produto reativado com sucesso', produto });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+};
+
+export const listarProdutosInativos = async (req, res) => {
+  try {
+    const produtos = await Product.find({ ativo: false });
+    res.json(produtos);
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }

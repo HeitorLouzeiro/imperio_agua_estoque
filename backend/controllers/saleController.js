@@ -7,44 +7,33 @@ export const criarVenda = async (req, res) => {
     const { cliente, itens, formaPagamento, desconto = 0, observacoes } = req.body;
     const vendedor = req.userId;
 
-    // Validar produtos e montar lista de itens com preço e subtotal
-    const itensProcessados = [];
-
+    // Validar se todos os produtos existem e têm estoque suficiente
     for (const item of itens) {
-      const produto = await Product.findById(item.produto);
+      const produto = await Product.findOne({ _id: item.produto, ativo: true });
       if (!produto) {
-        return res.status(404).json({ erro: `Produto ${item.produto} não encontrado` });
+        return res.status(404).json({ erro: `Produto ${item.produto} não encontrado ou inativo` });
       }
-
       if (produto.quantidade < item.quantidade) {
-        return res.status(400).json({
-          erro: `Estoque insuficiente para ${produto.nome}. Disponível Somente : ${produto.quantidade} unidade(s)`
-        });
+        return res.status(400).json({ erro: `Estoque insuficiente para ${produto.nome}. Disponível: ${produto.quantidade}` });
       }
-
-      itensProcessados.push({
-        produto: produto._id,
-        quantidade: item.quantidade,
-        precoUnitario: produto.preco,
-        subtotal: item.quantidade * produto.preco
-      });
+      item.precoUnitario = produto.preco;
+      item.subtotal = item.quantidade * produto.preco;
     }
 
     // Criar a venda com os itens processados
     const venda = new Sale({
       cliente,
       vendedor,
-      itens: itensProcessados,
+      itens,
       formaPagamento,
       desconto,
       observacoes
     });
 
-    // Salvar a venda (número, subtotal, total são preenchidos automaticamente no pre('save'))
     await venda.save();
 
     // Atualizar estoque dos produtos
-    for (const item of itensProcessados) {
+    for (const item of itens) {
       await Product.findByIdAndUpdate(
         item.produto,
         { $inc: { quantidade: -item.quantidade } }
@@ -81,8 +70,14 @@ export const listarVendas = async (req, res) => {
     }
 
     let query = Sale.find(filtros)
-      .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo marca preco')
+      .populate({
+        path: 'vendedor',
+        select: 'nome email ativo'
+      })
+      .populate({
+        path: 'itens.produto',
+        select: 'nome codigo marca preco ativo'
+      })
       .sort({ dataVenda: -1 });
 
     // Se não foi especificada paginação, retornar todas as vendas
@@ -113,8 +108,14 @@ export const listarVendas = async (req, res) => {
 export const obterVenda = async (req, res) => {
   try {
     const venda = await Sale.findById(req.params.id)
-      .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo preco marca quantidade');
+      .populate({
+        path: 'vendedor',
+        select: 'nome email ativo'
+      })
+      .populate({
+        path: 'itens.produto',
+        select: 'nome codigo preco marca quantidade ativo'
+      });
 
     if (!venda) {
       return res.status(404).json({ erro: 'Venda não encontrada' });
@@ -224,7 +225,7 @@ export const obterEstatisticas = async (req, res) => {
     amanha.setDate(amanha.getDate() + 1);
 
     const filtros = {
-      status: { $ne: 'cancelada' }
+      status: 'paga' // Apenas vendas pagas contam para a receita
     };
 
     if (dataInicio || dataFim) {
@@ -238,7 +239,7 @@ export const obterEstatisticas = async (req, res) => {
       {
         $match: {
           dataVenda: { $gte: hoje, $lt: amanha },
-          status: { $ne: 'cancelada' }
+          status: 'paga' // Apenas vendas pagas
         }
       },
       {
@@ -299,11 +300,44 @@ export const obterEstatisticas = async (req, res) => {
       }
     ]);
 
+    // Resumo por status (para dashboard completo)
+    const resumoPorStatus = await Sale.aggregate([
+      {
+        $match: {
+          ...(dataInicio || dataFim ? { dataVenda: filtros.dataVenda } : {})
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          quantidade: { $sum: 1 },
+          valor: { $sum: '$total' }
+        }
+      }
+    ]);
+
     const estatisticas = {
       hoje: vendasHoje[0] || { totalVendas: 0, faturamentoTotal: 0 },
       periodo: vendasPeriodo[0] || { totalVendas: 0, faturamentoTotal: 0, ticketMedio: 0 },
       produtosMaisVendidos,
-      vendasPorFormaPagamento
+      vendasPorFormaPagamento,
+      resumoPorStatus,
+      observacao: 'Faturamento inclui apenas vendas com status PAGA',
+      // Campos compatíveis com o frontend
+      totalVendas: vendasPeriodo[0]?.totalVendas || 0,
+      receitaTotal: vendasPeriodo[0]?.faturamentoTotal || 0,
+      receitaHoje: vendasHoje[0]?.faturamentoTotal || 0,
+      vendasHoje: vendasHoje[0]?.totalVendas || 0,
+      vendasPorStatus: {
+        pendente: resumoPorStatus.find(r => r._id === 'pendente')?.quantidade || 0,
+        paga: resumoPorStatus.find(r => r._id === 'paga')?.quantidade || 0,
+        cancelada: resumoPorStatus.find(r => r._id === 'cancelada')?.quantidade || 0
+      },
+      produtoMaisVendido: produtosMaisVendidos.length > 0 ? {
+        nome: produtosMaisVendidos[0].produto?.nome || 'N/A',
+        quantidade: produtosMaisVendidos[0].quantidadeVendida || 0,
+        codigo: produtosMaisVendidos[0].produto?.codigo || 'N/A'
+      } : null
     };
 
     res.json(estatisticas);

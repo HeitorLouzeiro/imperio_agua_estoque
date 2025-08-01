@@ -162,16 +162,16 @@ export const useProductManagement = (): UseProductManagementReturn => {
     }
   };
 
-  // Excluir produto
+  // Excluir produto (soft delete)
   const handleDelete = async (id: string | number) => {
-    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+    if (window.confirm('Tem certeza que deseja desativar este produto?\n\nO produto ficará inativo mas seu histórico será preservado.')) {
       try {
         await productService.delete(id);
-        showSnackbar('Produto excluído com sucesso!');
+        showSnackbar('Produto desativado com sucesso!');
         loadProducts();
       } catch (error) {
-        console.error('Erro ao excluir produto:', error);
-        showSnackbar('Erro ao excluir produto', 'error');
+        console.error('Erro ao desativar produto:', error);
+        showSnackbar('Erro ao desativar produto', 'error');
       }
     }
   };

@@ -36,8 +36,10 @@ export const useSales = () => {
         stats.vendasPorStatus[status as keyof typeof stats.vendasPorStatus]++;
       }
       
-      // Receita total
-      stats.receitaTotal += sale.total || 0;
+      // Receita total - apenas para vendas PAGAS
+      if (sale.status === 'paga') {
+        stats.receitaTotal += sale.total || 0;
+      }
       
       // Vendas de hoje
       const saleDate = new Date(sale.dataVenda || sale.createdAt);
@@ -45,7 +47,10 @@ export const useSales = () => {
       
       if (saleDate.getTime() === hoje.getTime()) {
         stats.vendasHoje++;
-        stats.receitaHoje += sale.total || 0;
+        // Receita de hoje - apenas para vendas PAGAS
+        if (sale.status === 'paga') {
+          stats.receitaHoje += sale.total || 0;
+        }
       }
 
       // Contar produtos mais vendidos APENAS para vendas PAGAS

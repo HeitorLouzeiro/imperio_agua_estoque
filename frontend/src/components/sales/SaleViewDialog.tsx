@@ -18,6 +18,7 @@ import {
 import { Close as CloseIcon, Print as PrintIcon, Share as ShareIcon } from '@mui/icons-material';
 import { Sale } from '../../types';
 import { printReceipt, shareReceipt } from '../../utils/receiptUtils';
+import { de } from 'date-fns/locale';
 
 interface SaleViewDialogProps {
   open: boolean;
@@ -192,28 +193,45 @@ const SaleViewDialog: React.FC<SaleViewDialogProps> = ({
               Produtos
             </Typography>
             <List>
-              {sale.itens?.map((item, index) => (
-                <ListItem key={index} divider>
-                  <ListItemText
-                    primary={
-                      <Box>
-                        <Typography variant="body1" fontWeight="bold">
-                          {(typeof item.produto === 'object' && 'nome' in item.produto ? item.produto.nome : null) || 
-                           item.product?.name || 
-                           item.nome || 
-                           'Produto'} - Quantidade: {item.quantidade}
-                        </Typography>
-                        {(item.product?.codigo) && (
-                          <Typography variant="body2" color="text.secondary">
-                            Código: {item.product.codigo}
-                          </Typography>
-                        )}
-                      </Box>
-                    }
-                    secondary={`Preço Unitário: R$ ${item.precoUnitario?.toFixed(2) || '0.00'} | Subtotal: R$ ${item.subtotal?.toFixed(2) || '0.00'}`}
-                  />
-                </ListItem>
-              ))}
+              {sale.itens?.map((item, index) => {
+                const produto = typeof item.produto === 'object' ? item.produto : null;
+                const isInactive = produto && 'ativo' in produto && !produto.ativo;
+                
+                return (
+                  <ListItem key={index} divider>
+                    <ListItemText
+                      primary={
+                        <Box>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Typography variant="body1" fontWeight="bold">
+                              {produto?.nome || item.product?.name || item.nome || 'Produto'} - Quantidade: {item.quantidade}
+                            </Typography>
+                            {isInactive && (
+                              <Chip 
+                                label="Produto Inativo" 
+                                size="small" 
+                                color="warning" 
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                          {produto?.codigo && (
+                            <Typography variant="body2" color="text.secondary">
+                              Código: {produto.codigo}
+                            </Typography>
+                          )}
+                          {isInactive && (
+                            <Typography variant="caption" color="warning.main" sx={{ fontStyle: 'italic' }}>
+                              Este produto foi desativado após a venda
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                      secondary={`Preço Unitário: R$ ${item.precoUnitario?.toFixed(2) || '0.00'} | Subtotal: R$ ${item.subtotal?.toFixed(2) || '0.00'}`}
+                    />
+                  </ListItem>
+                );
+              })}
             </List>
           </Grid>
 

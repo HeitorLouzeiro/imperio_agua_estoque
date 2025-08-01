@@ -7,6 +7,7 @@ export interface User {
   role: 'administrador' | 'funcionario';
   createdAt: string;
   updatedAt: string;
+  ativo?: boolean;
   // Campos em português para compatibilidade com backend
   nome?: string;
   papel?: 'administrador' | 'funcionario';
@@ -23,9 +24,11 @@ export interface Product {
   preco?: number;
   quantity: number;
   quantidade?: number;
+  estoque?: number; // Adicionando estoque como alias para quantity/quantidade
   category?: string;
   createdAt: string;
   updatedAt: string;
+  ativo?: boolean;
   // Campos específicos para compatibilidade
   _id?: string;
 }

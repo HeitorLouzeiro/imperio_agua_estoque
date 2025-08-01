@@ -9,7 +9,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Edit as EditIcon,
-  Delete as DeleteIcon,
+  Block as BlockIcon,
   Visibility as ViewIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
@@ -70,9 +70,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <EditIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Excluir">
+          <Tooltip title="Desativar">
             <IconButton size="small" color="error" onClick={() => onDelete(params.row.id)}>
-              <DeleteIcon />
+              <BlockIcon />
             </IconButton>
           </Tooltip>
         </Box>

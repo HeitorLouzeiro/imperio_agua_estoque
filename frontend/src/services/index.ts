@@ -61,6 +61,17 @@ export const authService = {
     return response.data;
   },
 
+  reactivateUser: async (id: number): Promise<ApiResponse<User>> => {
+    if (!id) throw new Error('ID do usuário é necessário para reativação');
+    const response = await api.patch(`/usuarios/${id}/reativar`);
+    return response.data;
+  },
+
+  getInactiveUsers: async (): Promise<User[]> => {
+    const response = await api.get('/usuarios/inativos/listar');
+    return response.data;
+  },
+
   setToken: (token: string | null): void => {
     if (token) {
       localStorage.setItem('token', token);
@@ -97,6 +108,16 @@ export const productService = {
 
   delete: async (id: string | number): Promise<ApiResponse<void>> => {
     const response = await api.delete(`/produtos/${id}`);
+    return response.data;
+  },
+
+  reactivate: async (id: string | number): Promise<ApiResponse<Product>> => {
+    const response = await api.patch(`/produtos/${id}/reativar`);
+    return response.data;
+  },
+
+  getInactive: async (): Promise<Product[]> => {
+    const response = await api.get('/produtos/inativos/listar');
     return response.data;
   },
 
@@ -173,7 +194,7 @@ export const salesService = {
 
 export const userService = {
   getUsers: async (): Promise<User[]> => {
-    const response = await api.get('/usuarios');
+    const response = await api.get('/usuarios/listuser');
     return response.data;
   },
 

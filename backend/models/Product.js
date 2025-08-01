@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema({
   marca: { type: String, required: true },
   preco: { type: Number, required: true },
   quantidade: { type: Number, required: true },
+  ativo: { type: Boolean, default: true },
 }, { timestamps: true });
 
 export default mongoose.model('Product', productSchema);

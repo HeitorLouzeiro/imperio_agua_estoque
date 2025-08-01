@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarProduto, listarProdutos, atualizarProduto, deletarProduto,buscarProdutoPorCodigo, buscarProdutoPorMarca, getById  } from '../controllers/productController.js';
+import { criarProduto, listarProdutos, atualizarProduto, deletarProduto,buscarProdutoPorCodigo, buscarProdutoPorMarca, getById, reativarProduto, listarProdutosInativos  } from '../controllers/productController.js';
 import { autenticar } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -144,4 +144,9 @@ router.get('/marca/:marca', autenticar, buscarProdutoPorMarca);
  *           type: string
  *         description: Nome da marcao
  */
+
+// Rotas para gerenciamento de produtos inativos
+router.get('/inativos/listar', autenticar, listarProdutosInativos);
+router.patch('/:id/reativar', autenticar, reativarProduto);
+
 export default router;

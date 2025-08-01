@@ -8,7 +8,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Edit, Delete, Person as PersonIcon } from '@mui/icons-material';
+import { Edit, Block, Person as PersonIcon } from '@mui/icons-material';
 import { User } from '../../types';
 
 interface UserTableProps {
@@ -75,9 +75,9 @@ const UserTable: React.FC<UserTableProps> = ({
               <Edit />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Excluir Usuário">
+          <Tooltip title="Desativar Usuário">
             <IconButton size="small" color="error" onClick={() => onDelete(params.row.id)}>
-              <Delete />
+              <Block />
             </IconButton>
           </Tooltip>
         </Box>

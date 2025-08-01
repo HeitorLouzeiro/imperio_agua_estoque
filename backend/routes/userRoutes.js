@@ -1,5 +1,5 @@
 import express from 'express';
-import {  atualizarUsuarioById, excluirUsuario, listarUsuarios, login, obterPerfil, registrar } from '../controllers/userController.js';
+import {  atualizarUsuarioById, excluirUsuario, listarUsuarios, login, obterPerfil, registrar, reativarUsuario, listarUsuariosInativos } from '../controllers/userController.js';
 import { autenticar } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -60,5 +60,9 @@ router.get('/perfil', autenticar, obterPerfil);
 router.put('/:id', autenticar, atualizarUsuarioById);
 
 router.delete('/:id', autenticar, excluirUsuario);
+
+// Rotas para gerenciamento de usuários inativos
+router.get('/inativos/listar', autenticar, listarUsuariosInativos);
+router.patch('/:id/reativar', autenticar, reativarUsuario);
 
 export default router;
