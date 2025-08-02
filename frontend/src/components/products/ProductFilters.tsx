@@ -18,6 +18,8 @@ interface ProductFiltersProps {
   setSearchTerm: (value: string) => void;
   filterCategory: string;
   setFilterCategory: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
   categories: string[];
   onRefresh: () => void;
 }
@@ -27,6 +29,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   setSearchTerm,
   filterCategory,
   setFilterCategory,
+  statusFilter,
+  setStatusFilter,
   categories,
   onRefresh
 }) => {
@@ -34,7 +38,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     <Card sx={{ mb: 2 }}>
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <TextField
               fullWidth
               placeholder="Buscar por código, nome ou marca"
@@ -49,7 +53,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
             <TextField
               select
               fullWidth
@@ -63,6 +67,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   {category}
                 </MenuItem>
               ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              select
+              fullWidth
+              label="Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="ativo">Apenas Ativos</MenuItem>
+              <MenuItem value="inativo">Apenas Inativos</MenuItem>
             </TextField>
           </Grid>
           <Grid item xs={12} sm={2}>

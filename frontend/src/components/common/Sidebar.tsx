@@ -17,8 +17,8 @@ import {
   Inventory,
   ShoppingCart,
   People,
-  Settings,
   Store,
+  Person,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,6 +62,12 @@ const menuItems: MenuItem[] = [
     path: '/users',
     roles: ['administrador'],
   },
+  {
+    text: 'Perfil',
+    icon: <Person />,
+    path: '/profile',
+    roles: ['administrador', 'funcionario'],
+  },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
@@ -70,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
   const { user } = useAuth();
 
   const filteredMenuItems = menuItems.filter(item =>
-    item.roles.includes((user as any)?.tipo || 'funcionario')
+    item.roles.includes((user as any)?.role || (user as any)?.papel || 'funcionario')
   );
 
   const drawer = (
@@ -143,25 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
 
       <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.2)', mx: 2, mb: 2 }} />
 
-      <List sx={{ px: 2, pb: 2 }}>
-        <ListItem disablePadding>
-          <ListItemButton
-            sx={{
-              borderRadius: 2,
-              color: 'rgba(255, 255, 255, 0.8)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-              <Settings />
-            </ListItemIcon>
-            <ListItemText primary="Configurações" />
-          </ListItemButton>
-        </ListItem>
-      </List>
+      {/* Removido item de Configurações - não implementado */}
     </Box>
   );
 

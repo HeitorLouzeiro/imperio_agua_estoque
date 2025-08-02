@@ -16,10 +16,24 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Sales from './pages/Sales';
 import Users from './pages/Users';
+import Profile from './pages/Profile';
 
 // Componente para redirecionamento baseado na autenticação
 const AuthRedirect: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Carregando...</div>
+      </div>
+    );
+  }
   
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -52,6 +66,7 @@ const App: React.FC = () => {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/products" element={<Products />} />
                         <Route path="/sales" element={<Sales />} />
+                        <Route path="/profile" element={<Profile />} />
 
                         {/* Rota exclusiva para administrador */}
                         <Route

@@ -13,15 +13,23 @@ import {
   ListItemIcon,
   ListItemText,
   Badge,
+  Popover,
+  List,
+  ListItem,
+  ListItemAvatar,
+  Chip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   AccountCircle,
-  Settings,
   Logout,
   Notifications,
+  ShoppingCart,
+  Warning,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useNotifications, AppNotification } from '../../hooks/useNotifications';
 
 interface HeaderProps {
   onDrawerToggle: () => void;
@@ -29,7 +37,10 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { notifications, getNotificationCount } = useNotifications();
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [notificationAnchorEl, setNotificationAnchorEl] = React.useState<HTMLElement | null>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -37,6 +48,19 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
 
   const handleMenuClose = (): void => {
     setAnchorEl(null);
+  };
+
+  const handleNotificationClick = (event: React.MouseEvent<HTMLElement>): void => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = (): void => {
+    setNotificationAnchorEl(null);
+  };
+
+  const handleProfileClick = (): void => {
+    handleMenuClose();
+    navigate('/profile');
   };
 
   const handleLogout = (): void => {
@@ -62,11 +86,73 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton color="inherit">
-            <Badge badgeContent={3} color="error">
+          <IconButton color="inherit" onClick={handleNotificationClick}>
+            <Badge badgeContent={getNotificationCount()} color="error">
               <Notifications />
             </Badge>
           </IconButton>
+
+          <Popover
+            open={Boolean(notificationAnchorEl)}
+            anchorEl={notificationAnchorEl}
+            onClose={handleNotificationClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                maxWidth: 350,
+                maxHeight: 400,
+                borderRadius: 2,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              },
+            }}
+          >
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Notificações ({getNotificationCount()})
+              </Typography>
+              {notifications.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  Nenhuma notificação no momento
+                </Typography>
+              ) : (
+                <List sx={{ p: 0 }}>
+                  {notifications.map((notification: AppNotification) => (
+                    <ListItem key={notification.id} sx={{ px: 0, py: 1 }}>
+                      <ListItemAvatar>
+                        {notification.type === 'low_stock' ? (
+                          <Warning color="warning" />
+                        ) : (
+                          <ShoppingCart color="success" />
+                        )}
+                      </ListItemAvatar>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          {notification.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {notification.message}
+                        </Typography>
+                        <Chip
+                          label={notification.type === 'low_stock' ? 'Estoque' : 'Venda'}
+                          size="small"
+                          color={notification.type === 'low_stock' ? 'warning' : 'success'}
+                          sx={{ mt: 0.5 }}
+                        />
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Box>
+          </Popover>
 
           <Button
             onClick={handleMenuOpen}
@@ -108,17 +194,11 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
               },
             }}
           >
-            <MenuItem onClick={handleMenuClose}>
+            <MenuItem onClick={handleProfileClick}>
               <ListItemIcon>
                 <AccountCircle />
               </ListItemIcon>
               <ListItemText>Meu Perfil</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
-              <ListItemIcon>
-                <Settings />
-              </ListItemIcon>
-              <ListItemText>Configurações</ListItemText>
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout}>

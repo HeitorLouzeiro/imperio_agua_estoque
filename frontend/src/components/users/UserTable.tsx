@@ -8,7 +8,13 @@ import {
   Tooltip
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Edit, Block, Person as PersonIcon } from '@mui/icons-material';
+import { 
+  Edit, 
+  Block, 
+  Person as PersonIcon,
+  ToggleOn,
+  ToggleOff
+} from '@mui/icons-material';
 import { User } from '../../types';
 
 interface UserTableProps {
@@ -16,13 +22,15 @@ interface UserTableProps {
   loading: boolean;
   onEdit: (user: User) => void;
   onDelete: (id: string | number) => void;
+  onToggleStatus?: (id: string | number) => void;
 }
 
 const UserTable: React.FC<UserTableProps> = ({
   users,
   loading,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleStatus
 }) => {
   const columns: GridColDef[] = [
     { 
@@ -55,6 +63,19 @@ const UserTable: React.FC<UserTableProps> = ({
       ),
     },
     {
+      field: 'ativo',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value !== false ? 'Ativo' : 'Inativo'}
+          color={params.value !== false ? 'success' : 'error'}
+          size="small"
+          variant={params.value !== false ? 'filled' : 'outlined'}
+        />
+      ),
+    },
+    {
       field: 'createdAt',
       headerName: 'Criado em',
       width: 130,
@@ -66,7 +87,7 @@ const UserTable: React.FC<UserTableProps> = ({
     {
       field: 'actions',
       headerName: 'Ações',
-      width: 120,
+      width: 160,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
@@ -75,11 +96,23 @@ const UserTable: React.FC<UserTableProps> = ({
               <Edit />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Desativar Usuário">
-            <IconButton size="small" color="error" onClick={() => onDelete(params.row.id)}>
-              <Block />
-            </IconButton>
-          </Tooltip>
+          {onToggleStatus && (
+            <Tooltip title={params.row.ativo !== false ? 'Desativar' : 'Reativar'}>
+              <IconButton 
+                size="small" 
+                color={params.row.ativo !== false ? 'success' : 'error'}
+                onClick={() => {
+                  const action = params.row.ativo !== false ? 'desativar' : 'reativar';
+                  const message = `Tem certeza que deseja ${action} o usuário "${params.row.nome}"?`;
+                  if (window.confirm(message)) {
+                    onToggleStatus(params.row.id);
+                  }
+                }}
+              >
+                {params.row.ativo !== false ? <ToggleOn /> : <ToggleOff />}
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       ),
     },

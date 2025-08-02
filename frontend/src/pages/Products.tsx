@@ -25,6 +25,7 @@ const Products: React.FC = () => {
     categories,
     searchTerm,
     filterCategory,
+    statusFilter,
     open,
     editingProduct,
     viewProduct,
@@ -37,11 +38,13 @@ const Products: React.FC = () => {
     // Actions
     setSearchTerm,
     setFilterCategory,
+    setStatusFilter,
     loadProducts,
     handleAdd,
     handleEdit,
     handleView,
     handleDelete,
+    handleToggleStatus,
     handleSave,
     handleChange,
     getFieldError,
@@ -67,6 +70,8 @@ const Products: React.FC = () => {
           setSearchTerm={setSearchTerm}
           filterCategory={filterCategory}
           setFilterCategory={setFilterCategory}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
           categories={categories}
           onRefresh={loadProducts}
         />
@@ -78,6 +83,7 @@ const Products: React.FC = () => {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
         />
 
         {/* Form Dialog */}

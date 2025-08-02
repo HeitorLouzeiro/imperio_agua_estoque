@@ -17,6 +17,7 @@ interface UseProductManagementReturn {
   categories: string[];
   searchTerm: string;
   filterCategory: string;
+  statusFilter: string;
   open: boolean;
   editingProduct: Product | null;
   viewProduct: Product | null;
@@ -33,11 +34,13 @@ interface UseProductManagementReturn {
   // Actions
   setSearchTerm: (value: string) => void;
   setFilterCategory: (value: string) => void;
+  setStatusFilter: (value: string) => void;
   loadProducts: () => Promise<void>;
   handleAdd: () => void;
   handleEdit: (product: Product) => void;
   handleView: (id: string | number) => Promise<void>;
   handleDelete: (id: string | number) => Promise<void>;
+  handleToggleStatus: (id: string | number) => Promise<void>;
   handleSave: () => Promise<void>;
   handleChange: (field: keyof ProductFormData) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   getFieldError: (field: keyof ProductFormData) => string;
@@ -56,6 +59,7 @@ export const useProductManagement = (): UseProductManagementReturn => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [categories, setCategories] = useState<string[]>([]);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -74,16 +78,30 @@ export const useProductManagement = (): UseProductManagementReturn => {
     quantidade: '',
   });
 
-  // Carrega produtos ao montar
+  // Carrega produtos ao montar e quando statusFilter muda
   useEffect(() => {
     loadProducts();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Carregar produtos da API
+  // Carregar produtos da API (com filtro de status)
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const response = await productService.getAll();
+      let response: any[] = [];
+      
+      if (statusFilter === 'inativo') {
+        response = await productService.getInactive();
+      } else if (statusFilter === 'ativo') {
+        response = await productService.getAll();
+      } else {
+        // todos - combinar ativos e inativos
+        const [activeProducts, inactiveProducts] = await Promise.all([
+          productService.getAll(),
+          productService.getInactive()
+        ]);
+        response = [...activeProducts, ...inactiveProducts];
+      }
+      
       const formatted: Product[] = response.map((p: any) => ({
         id: p._id || p.id,
         codigo: p.codigo,
@@ -95,6 +113,7 @@ export const useProductManagement = (): UseProductManagementReturn => {
         quantity: p.quantidade || p.quantity || 0,
         quantidade: p.quantidade,
         category: p.marca,
+        ativo: p.ativo,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       }));
@@ -173,6 +192,32 @@ export const useProductManagement = (): UseProductManagementReturn => {
         console.error('Erro ao desativar produto:', error);
         showSnackbar('Erro ao desativar produto', 'error');
       }
+    }
+  };
+
+  // Toggle status do produto (ativar/desativar)
+  const handleToggleStatus = async (id: string | number) => {
+    try {
+      const product = products.find(p => p.id === id || p._id === id);
+      if (!product) {
+        showSnackbar('Produto não encontrado', 'error');
+        return;
+      }
+
+      if (product.ativo === false) {
+        // Reativar produto
+        await productService.reactivate(id);
+        showSnackbar('Produto reativado com sucesso!', 'success');
+      } else {
+        // Desativar produto
+        await productService.delete(id);
+        showSnackbar('Produto desativado com sucesso!', 'success');
+      }
+      
+      loadProducts();
+    } catch (error) {
+      console.error('Erro ao alterar status do produto:', error);
+      showSnackbar('Erro ao alterar status do produto', 'error');
     }
   };
 
@@ -299,6 +344,7 @@ export const useProductManagement = (): UseProductManagementReturn => {
     categories,
     searchTerm,
     filterCategory,
+    statusFilter,
     open,
     editingProduct,
     viewProduct,
@@ -311,11 +357,13 @@ export const useProductManagement = (): UseProductManagementReturn => {
     // Actions
     setSearchTerm,
     setFilterCategory,
+    setStatusFilter,
     loadProducts,
     handleAdd,
     handleEdit,
     handleView,
     handleDelete,
+    handleToggleStatus,
     handleSave,
     handleChange,
     getFieldError,

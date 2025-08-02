@@ -1,5 +1,5 @@
 import express from 'express';
-import {  atualizarUsuarioById, excluirUsuario, listarUsuarios, login, obterPerfil, registrar, reativarUsuario, listarUsuariosInativos } from '../controllers/userController.js';
+import {  atualizarUsuarioById, atualizarPerfil, excluirUsuario, listarUsuarios, login, obterPerfil, registrar, reativarUsuario, listarUsuariosInativos } from '../controllers/userController.js';
 import { autenticar } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -58,6 +58,9 @@ router.get('/listuser', autenticar, listarUsuarios);
 router.get('/perfil', autenticar, obterPerfil);
 
 router.put('/:id', autenticar, atualizarUsuarioById);
+
+// Rota específica para atualizar perfil com validação de senha
+router.put('/perfil/:id', autenticar, atualizarPerfil);
 
 router.delete('/:id', autenticar, excluirUsuario);
 

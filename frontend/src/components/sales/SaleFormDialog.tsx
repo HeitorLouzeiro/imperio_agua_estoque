@@ -433,12 +433,33 @@ const SaleFormDialog: React.FC<SaleFormDialogProps> = ({
                       type="number"
                       label="Desconto (R$)"
                       value={saleData.desconto || ''}
+                      disabled={saleItems.length === 0}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
-                        handleInputChange('desconto', !isNaN(value) && value > 0 ? value : undefined);
+                        const subtotal = saleItems.reduce((acc, item) => acc + item.subtotal, 0);
+                        
+                        if (!isNaN(value) && value > 0) {
+                          // Validar se o desconto não é maior que o subtotal
+                          if (value > subtotal) {
+                            handleInputChange('desconto', subtotal);
+                          } else {
+                            handleInputChange('desconto', value);
+                          }
+                        } else {
+                          handleInputChange('desconto', undefined);
+                        }
                       }}
-                      inputProps={{ min: 0.01, step: 0.01 }}
+                      inputProps={{ 
+                        min: 0.01, 
+                        step: 0.01,
+                        max: saleItems.reduce((acc, item) => acc + item.subtotal, 0)
+                      }}
                       placeholder="0.00"
+                      helperText={
+                        saleItems.length === 0 
+                          ? 'Adicione produtos para aplicar desconto' 
+                          : `Máximo: R$ ${saleItems.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)}`
+                      }
                     />
                   </Grid>
                   <Divider sx={{ my: 1 }} />

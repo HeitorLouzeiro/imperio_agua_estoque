@@ -115,7 +115,14 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
   };
 
   const handleRemoveItem = (index: number) => {
-    setSaleItems(prev => prev.filter((_, i) => i !== index));
+    setSaleItems(prev => {
+      const newItems = prev.filter((_, i) => i !== index);
+      // Se não há mais produtos, limpar o desconto
+      if (newItems.length === 0) {
+        setDesconto('');
+      }
+      return newItems;
+    });
   };
 
   const handleQuantityChange = (index: number, newQty: number) => {
@@ -133,12 +140,30 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
         }
         : item
     ));
+    
+    // Verificar se o desconto ainda é válido após a mudança de quantidade
+    if (typeof desconto === 'number' && desconto > 0) {
+      const newSubtotal = saleItems.reduce((total, item, i) => {
+        if (i === index) {
+          return total + (newQty * item.precoUnitario);
+        }
+        return total + item.subtotal;
+      }, 0);
+      
+      // Se o desconto for maior que o novo subtotal, ajustar
+      if (desconto > newSubtotal) {
+        setDesconto(newSubtotal);
+      }
+    }
   };
 
   const calculateTotal = () => {
     const subtotal = saleItems.reduce((total, item) => total + item.subtotal, 0);
     const descontoValue = typeof desconto === 'number' && desconto > 0 ? desconto : 0;
-    return subtotal - descontoValue;
+    const total = subtotal - descontoValue;
+    
+    // Garantir que o total nunca seja negativo
+    return Math.max(0, total);
   };
 
   const handleSubmit = async () => {
@@ -270,12 +295,33 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
               type="number"
               label="Desconto (R$)"
               value={desconto}
+              disabled={saleItems.length === 0}
               onChange={(e) => {
                 const value = parseFloat(e.target.value);
-                setDesconto(!isNaN(value) && value > 0 ? value : '');
+                const subtotal = saleItems.reduce((total, item) => total + item.subtotal, 0);
+                
+                if (!isNaN(value) && value > 0) {
+                  // Validar se o desconto não é maior que o subtotal
+                  if (value > subtotal) {
+                    setDesconto(subtotal);
+                  } else {
+                    setDesconto(value);
+                  }
+                } else {
+                  setDesconto('');
+                }
               }}
-              inputProps={{ min: 0.01, step: 0.01 }}
+              inputProps={{ 
+                min: 0.01, 
+                step: 0.01,
+                max: saleItems.reduce((total, item) => total + item.subtotal, 0)
+              }}
               placeholder="0.00"
+              helperText={
+                saleItems.length === 0 
+                  ? 'Adicione produtos para aplicar desconto' 
+                  : `Máximo: R$ ${saleItems.reduce((total, item) => total + item.subtotal, 0).toFixed(2)}`
+              }
             />
           </Grid>
 

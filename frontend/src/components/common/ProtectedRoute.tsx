@@ -24,7 +24,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && (user as any)?.tipo !== requiredRole) {
+  if (requiredRole && 
+      (user as any)?.role !== requiredRole && 
+      (user as any)?.papel !== requiredRole && 
+      (user as any)?.tipo !== requiredRole) {
     // Pode redirecionar para página que o usuário tem acesso, ou exibir mensagem de "Acesso negado"
     return <Navigate to="/dashboard" replace />;
   }

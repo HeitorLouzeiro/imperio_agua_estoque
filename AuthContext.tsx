@@ -5,9 +5,9 @@ import React, {
   useContext,
   useEffect,
   useState
-} from 'react';
-import { authService } from '../services';
-import { User } from '../types';
+} from "react";
+import { authService } from "../services";
+import { User } from "../types";
 
 interface AuthContextType {
   user: User | null;
@@ -43,7 +43,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   }
   return context;
 };
@@ -52,12 +52,12 @@ export const useAuth = (): AuthContextType => {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
   const logout = useCallback((): void => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
   }, []);
 
   const verifyToken = useCallback(async (): Promise<void> => {
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authService.getProfile();
       setUser(userData);
     } catch (error) {
-      console.error('Token inválido ou expirado:', error);
+      console.error("Token inválido ou expirado:", error);
       logout();
     } finally {
       setLoading(false);
@@ -96,17 +96,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       authService.setToken(newToken);
       const userData = await authService.getProfile();
       
-      localStorage.setItem('token', newToken);
+      localStorage.setItem("token", newToken);
       setToken(newToken);
       setUser(userData);
 
       return { success: true };
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error("Erro no login:", error);
       const authError = error as AuthError;
       return {
         success: false,
-        message: authError.response?.data?.erro || 'Erro ao fazer login'
+        message: authError.response?.data?.erro || "Erro ao fazer login"
       };
     }
   };
@@ -114,8 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAuthenticated = !!user && !!token;
 
   const isAdmin = (): boolean => {
-    const adminCheck = user?.role === 'administrador' || user?.papel === 'administrador';
-    return adminCheck;
+    return user?.role === "administrador" || user?.papel === "administrador";
   };
 
   const value: AuthContextType = {

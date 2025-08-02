@@ -14,6 +14,7 @@ import {
   UserFilters,
   UserTable,
   UserFormDialog,
+  UserQuickEditDialog,
   AccessDenied
 } from '../components/users';
 import { useUserManagement } from '../hooks';
@@ -26,11 +27,14 @@ const Users = () => {
     // States
     loading,
     openDialog,
+    openQuickEditDialog,
     editingUser,
     searchTerm,
     roleFilter,
+    statusFilter,
     snackbar,
     formData,
+    quickEditData,
     
     // Computed
     filteredUsers,
@@ -38,13 +42,20 @@ const Users = () => {
     // Actions
     setSearchTerm,
     setRoleFilter,
+    setStatusFilter,
     loadUsers,
     handleDialogOpen,
     handleDialogClose,
+    handleQuickEditOpen,
+    handleQuickEditClose,
     handleChange,
     handleSelectChange,
+    handleQuickEditRoleChange,
+    handleQuickEditStatusChange,
     handleSave,
+    handleQuickEditSave,
     handleDelete,
+    handleToggleStatus,
     handleSnackbarClose,
     handleClearFilters,
   } = useUserManagement();
@@ -88,6 +99,8 @@ const Users = () => {
           setSearchTerm={setSearchTerm}
           roleFilter={roleFilter}
           setRoleFilter={setRoleFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
           onClearFilters={handleClearFilters}
         />
 
@@ -95,19 +108,32 @@ const Users = () => {
         <UserTable
           users={filteredUsers}
           loading={loading}
-          onEdit={handleDialogOpen}
+          onEdit={handleQuickEditOpen}
           onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
         />
 
-        {/* Form Dialog */}
+        {/* Form Dialog - Apenas para criação */}
         <UserFormDialog
           open={openDialog}
           onClose={handleDialogClose}
           onSave={handleSave}
-          editingUser={editingUser}
+          editingUser={null} // Sempre null para criação
           formData={formData}
           onFormChange={handleChange}
           onSelectChange={handleSelectChange}
+        />
+
+        {/* Quick Edit Dialog - Para edição de status e papel */}
+        <UserQuickEditDialog
+          open={openQuickEditDialog}
+          onClose={handleQuickEditClose}
+          onSave={handleQuickEditSave}
+          editingUser={editingUser}
+          currentRole={quickEditData.role}
+          currentStatus={quickEditData.status}
+          onRoleChange={handleQuickEditRoleChange}
+          onStatusChange={handleQuickEditStatusChange}
         />
 
         {/* Snackbar */}

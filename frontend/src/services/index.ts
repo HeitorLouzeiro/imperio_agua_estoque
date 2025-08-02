@@ -50,18 +50,18 @@ export const authService = {
     return response.data;
   },
 
-  updateProfile: async (id: number, userData: UpdateUserRequest): Promise<User> => {
-    const response = await api.put(`/usuarios/${id}`, userData);
-    return response.data;
+  updateProfile: async (id: string, userData: UpdateUserRequest): Promise<User> => {
+    const response = await api.put(`/usuarios/perfil/${id}`, userData);
+    return response.data.usuario || response.data;
   },
 
-  deleteUser: async (id: number): Promise<ApiResponse<void>> => {
+  deleteUser: async (id: string): Promise<ApiResponse<void>> => {
     if (!id) throw new Error('ID do usuário é necessário para exclusão');
     const response = await api.delete(`/usuarios/${id}`);
     return response.data;
   },
 
-  reactivateUser: async (id: number): Promise<ApiResponse<User>> => {
+  reactivateUser: async (id: string): Promise<ApiResponse<User>> => {
     if (!id) throw new Error('ID do usuário é necessário para reativação');
     const response = await api.patch(`/usuarios/${id}/reativar`);
     return response.data;

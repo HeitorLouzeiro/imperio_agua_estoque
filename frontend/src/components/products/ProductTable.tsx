@@ -11,7 +11,9 @@ import {
   Edit as EditIcon,
   Block as BlockIcon,
   Visibility as ViewIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  ToggleOn,
+  ToggleOff
 } from '@mui/icons-material';
 import { Product } from '../../types';
 
@@ -21,6 +23,7 @@ interface ProductTableProps {
   onView: (id: string | number) => void;
   onEdit: (product: Product) => void;
   onDelete: (id: string | number) => void;
+  onToggleStatus?: (id: string | number) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -28,7 +31,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
   loading,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleStatus
 }) => {
   const columns = [
     { field: 'codigo', headerName: 'Código', width: 130 },
@@ -54,9 +58,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
       ),
     },
     {
+      field: 'ativo',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params: any) => (
+        <Chip
+          label={params.value !== false ? 'Ativo' : 'Inativo'}
+          color={params.value !== false ? 'success' : 'error'}
+          size="small"
+          variant={params.value !== false ? 'filled' : 'outlined'}
+        />
+      ),
+    },
+    {
       field: 'actions',
       headerName: 'Ações',
-      width: 150,
+      width: 180,
       sortable: false,
       renderCell: (params: any) => (
         <Box>
@@ -70,11 +87,23 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <EditIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Desativar">
-            <IconButton size="small" color="error" onClick={() => onDelete(params.row.id)}>
-              <BlockIcon />
-            </IconButton>
-          </Tooltip>
+          {onToggleStatus && (
+            <Tooltip title={params.row.ativo !== false ? 'Desativar' : 'Reativar'}>
+              <IconButton 
+                size="small" 
+                color={params.row.ativo !== false ? 'success' : 'error'}
+                onClick={() => {
+                  const action = params.row.ativo !== false ? 'desativar' : 'reativar';
+                  const message = `Tem certeza que deseja ${action} o produto "${params.row.nome}"?`;
+                  if (window.confirm(message)) {
+                    onToggleStatus(params.row.id);
+                  }
+                }}
+              >
+                {params.row.ativo !== false ? <ToggleOn /> : <ToggleOff />}
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       ),
     },

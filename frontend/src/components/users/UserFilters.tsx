@@ -18,6 +18,8 @@ interface UserFiltersProps {
   setSearchTerm: (value: string) => void;
   roleFilter: string;
   setRoleFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
   onClearFilters: () => void;
 }
 
@@ -26,6 +28,8 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   setSearchTerm,
   roleFilter,
   setRoleFilter,
+  statusFilter,
+  setStatusFilter,
   onClearFilters
 }) => {
   return (
@@ -34,7 +38,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         Filtros de Pesquisa
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <TextField
             label="Pesquisar"
             placeholder="Nome ou email do usuário..."
@@ -51,7 +55,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
             sx={{ borderRadius: 2 }}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <FormControl fullWidth>
             <InputLabel>Filtrar por papel</InputLabel>
             <Select
@@ -62,6 +66,20 @@ const UserFilters: React.FC<UserFiltersProps> = ({
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="administrador">Administrador</MenuItem>
               <MenuItem value="funcionario">Funcionário</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="ativo">Apenas Ativos</MenuItem>
+              <MenuItem value="inativo">Apenas Inativos</MenuItem>
             </Select>
           </FormControl>
         </Grid>
