@@ -9,9 +9,9 @@ export const criarVenda = async (req, res) => {
 
     // Validar se todos os produtos existem e têm estoque suficiente
     for (const item of itens) {
-      const produto = await Product.findById(item.produto);
+      const produto = await Product.findOne({ _id: item.produto, ativo: true });
       if (!produto) {
-        return res.status(404).json({ erro: `Produto ${item.produto} não encontrado` });
+        return res.status(404).json({ erro: `Produto ${item.produto} não encontrado ou inativo` });
       }
       if (produto.quantidade < item.quantidade) {
         return res.status(400).json({ erro: `Estoque insuficiente para ${produto.nome}. Disponível: ${produto.quantidade}` });
@@ -20,6 +20,7 @@ export const criarVenda = async (req, res) => {
       item.subtotal = item.quantidade * produto.preco;
     }
 
+    // Criar a venda com os itens processados
     const venda = new Sale({
       cliente,
       vendedor,
@@ -42,6 +43,7 @@ export const criarVenda = async (req, res) => {
     await venda.populate(['vendedor', 'itens.produto']);
     res.status(201).json(venda);
   } catch (err) {
+    console.error('Erro ao criar venda:', err);
     res.status(400).json({ erro: err.message });
   }
 };
@@ -49,28 +51,43 @@ export const criarVenda = async (req, res) => {
 // Listar todas as vendas
 export const listarVendas = async (req, res) => {
   try {
-    const { page = 1, limit = 10, dataInicio, dataFim, cliente, status } = req.query;
-    
+    const { page, limit = 100, dataInicio, dataFim, cliente, status } = req.query;
+
     const filtros = {};
-    
+
     if (dataInicio || dataFim) {
       filtros.dataVenda = {};
       if (dataInicio) filtros.dataVenda.$gte = new Date(dataInicio);
       if (dataFim) filtros.dataVenda.$lte = new Date(dataFim);
     }
-    
+
     if (cliente) {
       filtros.cliente = { $regex: cliente, $options: 'i' };
     }
-    
+
     if (status) {
       filtros.status = status;
     }
 
-    const vendas = await Sale.find(filtros)
-      .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo')
-      .sort({ dataVenda: -1 })
+    let query = Sale.find(filtros)
+      .populate({
+        path: 'vendedor',
+        select: 'nome email ativo'
+      })
+      .populate({
+        path: 'itens.produto',
+        select: 'nome codigo marca preco ativo'
+      })
+      .sort({ dataVenda: -1 });
+
+    // Se não foi especificada paginação, retornar todas as vendas
+    if (!page) {
+      const vendas = await query.limit(limit * 1);
+      return res.json(vendas);
+    }
+
+    // Caso contrário, usar paginação
+    const vendas = await query
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
@@ -91,9 +108,15 @@ export const listarVendas = async (req, res) => {
 export const obterVenda = async (req, res) => {
   try {
     const venda = await Sale.findById(req.params.id)
-      .populate('vendedor', 'nome email')
-      .populate('itens.produto', 'nome codigo preco');
-    
+      .populate({
+        path: 'vendedor',
+        select: 'nome email ativo'
+      })
+      .populate({
+        path: 'itens.produto',
+        select: 'nome codigo preco marca quantidade ativo'
+      });
+
     if (!venda) {
       return res.status(404).json({ erro: 'Venda não encontrada' });
     }
@@ -108,7 +131,7 @@ export const obterVenda = async (req, res) => {
 export const cancelarVenda = async (req, res) => {
   try {
     const venda = await Sale.findById(req.params.id).populate('itens.produto');
-    
+
     if (!venda) {
       return res.status(404).json({ erro: 'Venda não encontrada' });
     }
@@ -134,18 +157,75 @@ export const cancelarVenda = async (req, res) => {
   }
 };
 
+// Excluir uma venda
+export const excluirVenda = async (req, res) => {
+  try {
+    const venda = await Sale.findByIdAndDelete(req.params.id);
+    if (!venda) {
+      return res.status(404).json({ erro: 'Venda não encontrada' });
+    }
+
+    // Restaurar estoque dos produtos
+    for (const item of venda.itens) {
+      await Product.findByIdAndUpdate(
+        item.produto,
+        { $inc: { quantidade: item.quantidade } }
+      );
+    }
+
+    res.json({ message: 'Venda excluída com sucesso' });
+  } catch (err) {
+    res.status(400).json({ erro: err.message });
+  }
+};
+
+export const atualizarVenda = async (req, res) => {
+  try {
+    const venda = await Sale.findById(req.params.id);
+    if (!venda) {
+      return res.status(404).json({ erro: 'Venda não encontrada' });
+    }
+    
+    const { cliente, itens, formaPagamento, desconto, observacoes, status } = req.body;
+    
+    // Se apenas status foi enviado, atualizar apenas o status
+    if (status && Object.keys(req.body).length === 1) {
+      venda.status = status;
+      await venda.save();
+      await venda.populate(['vendedor', 'itens.produto']);
+      return res.json(venda);
+    }
+    
+    // Atualização completa da venda
+    venda.cliente = cliente || venda.cliente;
+    venda.itens = itens || venda.itens;
+    venda.formaPagamento = formaPagamento || venda.formaPagamento;
+    venda.desconto = desconto !== undefined ? desconto : venda.desconto;
+    venda.observacoes = observacoes || venda.observacoes;
+    if (status) venda.status = status;
+    
+    venda.subtotal = venda.itens.reduce((acc, item) => acc + item.subtotal, 0);
+    venda.total = venda.subtotal - venda.desconto;
+    await venda.save();
+    await venda.populate(['vendedor', 'itens.produto']);
+    res.json(venda);
+  } catch (err) {
+    res.status(400).json({ erro: err.message });
+  }
+};
+
 // Estatísticas de vendas
 export const obterEstatisticas = async (req, res) => {
   try {
     const { dataInicio, dataFim } = req.query;
-    
+
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const amanha = new Date(hoje);
     amanha.setDate(amanha.getDate() + 1);
 
     const filtros = {
-      status: { $ne: 'cancelada' }
+      status: 'paga' // Apenas vendas pagas contam para a receita
     };
 
     if (dataInicio || dataFim) {
@@ -159,7 +239,7 @@ export const obterEstatisticas = async (req, res) => {
       {
         $match: {
           dataVenda: { $gte: hoje, $lt: amanha },
-          status: { $ne: 'cancelada' }
+          status: 'paga' // Apenas vendas pagas
         }
       },
       {
@@ -220,15 +300,50 @@ export const obterEstatisticas = async (req, res) => {
       }
     ]);
 
+    // Resumo por status (para dashboard completo)
+    const resumoPorStatus = await Sale.aggregate([
+      {
+        $match: {
+          ...(dataInicio || dataFim ? { dataVenda: filtros.dataVenda } : {})
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          quantidade: { $sum: 1 },
+          valor: { $sum: '$total' }
+        }
+      }
+    ]);
+
     const estatisticas = {
       hoje: vendasHoje[0] || { totalVendas: 0, faturamentoTotal: 0 },
       periodo: vendasPeriodo[0] || { totalVendas: 0, faturamentoTotal: 0, ticketMedio: 0 },
       produtosMaisVendidos,
-      vendasPorFormaPagamento
+      vendasPorFormaPagamento,
+      resumoPorStatus,
+      observacao: 'Faturamento inclui apenas vendas com status PAGA',
+      // Campos compatíveis com o frontend
+      totalVendas: vendasPeriodo[0]?.totalVendas || 0,
+      receitaTotal: vendasPeriodo[0]?.faturamentoTotal || 0,
+      receitaHoje: vendasHoje[0]?.faturamentoTotal || 0,
+      vendasHoje: vendasHoje[0]?.totalVendas || 0,
+      vendasPorStatus: {
+        pendente: resumoPorStatus.find(r => r._id === 'pendente')?.quantidade || 0,
+        paga: resumoPorStatus.find(r => r._id === 'paga')?.quantidade || 0,
+        cancelada: resumoPorStatus.find(r => r._id === 'cancelada')?.quantidade || 0
+      },
+      produtoMaisVendido: produtosMaisVendidos.length > 0 ? {
+        nome: produtosMaisVendidos[0].produto?.nome || 'N/A',
+        quantidade: produtosMaisVendidos[0].quantidadeVendida || 0,
+        codigo: produtosMaisVendidos[0].produto?.codigo || 'N/A'
+      } : null
     };
 
     res.json(estatisticas);
   } catch (err) {
     res.status(400).json({ erro: err.message });
   }
+
+
 };

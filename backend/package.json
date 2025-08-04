@@ -4,16 +4,22 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "dev": "nodemon index.js",
     "start": "node index.js",
-    "create-test-users": "node createTestUsers.js"
+    "create-test-users": "node createTestUsers.js",
+    "migrate": "node migrations/001_add_ativo_field.js",
+    "seed": "node seedData.js",
+    "demo-soft-delete": "node demo-soft-delete.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.0",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
+    "nodemon": "^3.1.10",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.3"
   }
