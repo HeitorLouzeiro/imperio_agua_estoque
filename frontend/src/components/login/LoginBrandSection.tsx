@@ -4,12 +4,15 @@ import {
   Typography,
   Grid,
   Fade,
+  Chip,
 } from '@mui/material';
 import {
   Store,
   Water,
   Security,
   Speed,
+  Analytics,
+  CloudDone,
 } from '@mui/icons-material';
 
 interface Feature {
@@ -23,17 +26,22 @@ const LoginBrandSection: React.FC = () => {
     {
       icon: <Store sx={{ fontSize: 40 }} />,
       title: 'Gestão Completa',
-      description: 'Controle total do seu estoque de água mineral',
+      description: 'Controle total do seu estoque de água mineral com interface moderna',
+    },
+    {
+      icon: <Analytics sx={{ fontSize: 40 }} />,
+      title: 'Dashboard Inteligente',
+      description: 'Relatórios e métricas em tempo real para decisões rápidas',
     },
     {
       icon: <Speed sx={{ fontSize: 40 }} />,
-      title: 'Relatórios em Tempo Real',
-      description: 'Acompanhe vendas e estoque instantaneamente',
+      title: 'Performance Otimizada',
+      description: 'Sistema rápido e responsivo para máxima produtividade',
     },
     {
       icon: <Security sx={{ fontSize: 40 }} />,
       title: 'Segurança Avançada',
-      description: 'Seus dados protegidos com criptografia',
+      description: 'Proteção de dados com criptografia e backup automático',
     },
   ];
 
