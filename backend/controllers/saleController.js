@@ -11,11 +11,25 @@ export const criarVenda = async (req, res) => {
     for (const item of itens) {
       const produto = await Product.findOne({ _id: item.produto, ativo: true });
       if (!produto) {
-        return res.status(404).json({ erro: `Produto ${item.produto} não encontrado ou inativo` });
+        return res.status(404).json({ 
+          erro: `Produto com ID ${item.produto} não encontrado ou está inativo` 
+        });
       }
+      
+      // Verificação detalhada de estoque
       if (produto.quantidade < item.quantidade) {
-        return res.status(400).json({ erro: `Estoque insuficiente para ${produto.nome}. Disponível: ${produto.quantidade}` });
+        const estoqueDisponivel = produto.quantidade;
+        let mensagem = `Estoque insuficiente para "${produto.nome}"`;
+        
+        if (estoqueDisponivel === 0) {
+          mensagem += ` - Produto sem estoque`;
+        } else {
+          mensagem += ` - Disponível: ${estoqueDisponivel} unidade(s), solicitado: ${item.quantidade}`;
+        }
+        
+        return res.status(400).json({ erro: mensagem });
       }
+      
       item.precoUnitario = produto.preco;
       item.subtotal = item.quantidade * produto.preco;
     }

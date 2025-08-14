@@ -6,9 +6,15 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  ListItemIcon,
   Box,
   Chip,
+  Avatar,
 } from '@mui/material';
+import {
+  ShoppingBag,
+  TrendingUp,
+} from '@mui/icons-material';
 
 interface SaleDisplay {
   id: number;
@@ -33,9 +39,22 @@ const RecentSales: React.FC<RecentSalesProps> = ({ sales, loading = false }) => 
       height: '100%',
     }}
   >
-    <Typography variant="h6" gutterBottom fontWeight="bold">
-      Vendas Recentes
-    </Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Avatar
+        sx={{
+          bgcolor: 'success.light',
+          color: 'success.contrastText',
+          mr: 2,
+          width: 32,
+          height: 32,
+        }}
+      >
+        <TrendingUp sx={{ fontSize: 18 }} />
+      </Avatar>
+      <Typography variant="h6" fontWeight="bold">
+        Vendas Recentes
+      </Typography>
+    </Box>
     
     {loading ? (
       <Box 
@@ -69,9 +88,29 @@ const RecentSales: React.FC<RecentSalesProps> = ({ sales, loading = false }) => 
               },
             }}
           >
+            <ListItemIcon>
+              <Avatar
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.light',
+                  color: 'success.contrastText',
+                }}
+              >
+                <ShoppingBag sx={{ fontSize: 20 }} />
+              </Avatar>
+            </ListItemIcon>
             <ListItemText
-              primary={sale.cliente}
-              secondary={sale.data}
+              primary={
+                <Typography variant="body1" fontWeight={600}>
+                  {sale.cliente}
+                </Typography>
+              }
+              secondary={
+                <Typography variant="caption" color="text.secondary">
+                  {sale.data}
+                </Typography>
+              }
             />
             <ListItemSecondaryAction>
               <Chip

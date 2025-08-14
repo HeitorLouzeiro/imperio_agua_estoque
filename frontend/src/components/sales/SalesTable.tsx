@@ -1,9 +1,11 @@
 import React from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
+import { Box, Chip, IconButton, Tooltip, useTheme, useMediaQuery } from '@mui/material';
 import { 
   Visibility as ViewIcon, 
   Edit as EditIcon,
+  EditNote as EditNoteIcon,
+  Assignment as StatusIcon,
   Print as PrintIcon 
 } from '@mui/icons-material';
 import { Sale } from '../../types';
@@ -12,6 +14,7 @@ interface SalesTableProps {
   sales: Sale[];
   loading: boolean;
   onViewSale: (sale: Sale) => void;
+  onEditSale: (sale: Sale) => void;
   onEditStatus: (sale: Sale) => void;
   onPrintSale: (sale: Sale) => void;
 }
@@ -20,14 +23,19 @@ const SalesTable: React.FC<SalesTableProps> = ({
   sales,
   loading,
   onViewSale,
+  onEditSale,
   onEditStatus,
   onPrintSale
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const columns: GridColDef[] = [
     {
       field: 'numero',
       headerName: 'Número',
-      width: 120,
+      width: isMobile ? 80 : 120,
+      minWidth: 80,
       renderCell: (params: GridRenderCellParams) => (
         <strong>#{params.value}</strong>
       ),
@@ -121,13 +129,22 @@ const SalesTable: React.FC<SalesTableProps> = ({
               <ViewIcon />
             </IconButton>
           </Tooltip>
+          <Tooltip title="Editar Venda">
+            <IconButton 
+              size="small" 
+              onClick={() => onEditSale(params.row)}
+              color="warning"
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Editar Status">
             <IconButton 
               size="small" 
               onClick={() => onEditStatus(params.row)}
               color="secondary"
             >
-              <EditIcon />
+              <StatusIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Imprimir">
@@ -145,17 +162,30 @@ const SalesTable: React.FC<SalesTableProps> = ({
   ];
 
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
+    <Box sx={{ 
+      height: isMobile ? 500 : 400, 
+      width: '100%',
+      '& .MuiDataGrid-root': {
+        border: 'none',
+      },
+      '& .MuiDataGrid-columnHeaders': {
+        fontSize: isMobile ? '0.75rem' : '0.875rem',
+      },
+      '& .MuiDataGrid-cell': {
+        fontSize: isMobile ? '0.75rem' : '0.875rem',
+        padding: isMobile ? '4px' : '8px',
+      },
+    }}>
       <DataGrid
         rows={sales}
         columns={columns}
         loading={loading}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: 10 },
+            paginationModel: { page: 0, pageSize: isMobile ? 5 : 10 },
           },
         }}
-        pageSizeOptions={[5, 10, 25]}
+        pageSizeOptions={isMobile ? [5, 10] : [5, 10, 25]}
         disableRowSelectionOnClick
         getRowId={(row) => row.id || row._id}
         sx={{
@@ -165,7 +195,14 @@ const SalesTable: React.FC<SalesTableProps> = ({
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'action.hover',
           },
+          '& .MuiDataGrid-columnSeparator': {
+            display: isMobile ? 'none' : 'block',
+          },
+          '& .MuiDataGrid-toolbarContainer': {
+            padding: isMobile ? '8px' : '16px',
+          },
         }}
+        density={isMobile ? 'compact' : 'standard'}
       />
     </Box>
   );

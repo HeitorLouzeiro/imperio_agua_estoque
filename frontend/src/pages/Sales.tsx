@@ -17,10 +17,11 @@ import {
   SalesTable,
   SaleViewDialog,
   SaleStatusDialog,
-  QuickSaleDialog
+  QuickSaleDialog,
+  SaleEditDialog
 } from '../components/sales';
 import { useSales, useSnackbar } from '../hooks';
-import { productService } from '../services';
+import { productService, salesService } from '../services';
 import { Sale, Product } from '../types';
 
 const Sales = () => {
@@ -30,6 +31,7 @@ const Sales = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
+  const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
   const [quickSaleOpen, setQuickSaleOpen] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -106,6 +108,11 @@ const Sales = () => {
     setStatusDialogOpen(true);
   };
 
+  const handleEditSale = (sale: Sale) => {
+    setSelectedSale(sale);
+    setEditDialogOpen(true);
+  };
+
   const handlePrintSale = (sale: Sale) => {
     // Implementação movida para o componente SaleViewDialog
     showSnackbar('Use o botão de impressão no diálogo de visualização', 'info');
@@ -127,6 +134,19 @@ const Sales = () => {
       setStatusDialogOpen(false);
     } catch (error) {
       showSnackbar('Erro ao atualizar status', 'error');
+    }
+  };
+
+  const handleSaveEditedSale = async (saleData: any) => {
+    try {
+      await salesService.update(saleData.id, saleData);
+      
+      // Recarregar vendas
+      await loadSales(products);
+      
+      setEditDialogOpen(false);
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -171,6 +191,7 @@ const Sales = () => {
             sales={filteredSales}
             loading={salesLoading}
             onViewSale={handleViewSale}
+            onEditSale={handleEditSale}
             onEditStatus={handleEditStatus}
             onPrintSale={handlePrintSale}
           />
@@ -195,11 +216,22 @@ const Sales = () => {
         onUpdateStatus={handleUpdateStatus}
       />
 
+      {/* Dialog de Edição */}
+      <SaleEditDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        sale={selectedSale}
+        products={products}
+        onSuccess={showSnackbar}
+        onSave={handleSaveEditedSale}
+      />
+
       {/* Dialog de Venda Rápida */}
       <QuickSaleDialog
         open={quickSaleOpen}
         onClose={() => setQuickSaleOpen(false)}
         onSuccess={handleQuickSaleSubmit}
+        onError={(message) => showSnackbar(message, 'error')}
         products={products}
         recentClients={recentClients}
       />

@@ -1,0 +1,126 @@
+/* Configurações globais para prevenir overflow */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+/* Configurações específicas para containers */
+.MuiContainer-root {
+  max-width: 100% !important;
+  overflow-x: hidden;
+}
+
+.MuiBox-root {
+  max-width: 100%;
+}
+
+/* Configurações para tabelas e grids */
+.MuiDataGrid-root {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.MuiDataGrid-virtualScroller {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Configurações para formulários em dispositivos móveis */
+@media (max-width: 600px) {
+  .MuiDialog-paper {
+    margin: 8px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+  
+  .MuiTextField-root {
+    max-width: 100%;
+  }
+  
+  .MuiTable-root {
+    min-width: auto;
+  }
+  
+  .MuiTableContainer-root {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+}
+
+/* Configurações responsivas para componentes específicos */
+@media (max-width: 768px) {
+  .responsive-container {
+    padding: 8px !important;
+    margin: 0 !important;
+  }
+  
+  .responsive-card {
+    margin: 4px 0 !important;
+    border-radius: 8px !important;
+  }
+  
+  .responsive-button-group {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .responsive-form-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .responsive-form-actions > button {
+    width: 100% !important;
+    margin: 4px 0 !important;
+  }
+}
+
+/* Configurações para sidebar em dispositivos móveis */
+@media (max-width: 900px) {
+  .main-content-mobile {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* Prevenção de scroll horizontal em tabelas */
+.table-container {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-container table {
+  min-width: 100%;
+  width: auto;
+}
+
+/* Configurações para notificações responsivas */
+.notification-popover {
+  max-width: 90vw !important;
+}
+
+@media (max-width: 600px) {
+  .notification-popover {
+    max-width: 95vw !important;
+    max-height: 70vh !important;
+  }
+}
