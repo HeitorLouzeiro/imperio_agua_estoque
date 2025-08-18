@@ -3,7 +3,6 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, Chip, IconButton, Tooltip, useTheme, useMediaQuery } from '@mui/material';
 import { 
   Visibility as ViewIcon, 
-  Edit as EditIcon,
   EditNote as EditNoteIcon,
   Assignment as StatusIcon,
   Print as PrintIcon 
@@ -29,7 +28,6 @@ const SalesTable: React.FC<SalesTableProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const columns: GridColDef[] = [
     {
       field: 'numero',

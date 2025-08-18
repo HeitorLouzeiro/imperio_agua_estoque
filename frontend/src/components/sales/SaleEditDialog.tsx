@@ -19,7 +19,6 @@ import {
   TableRow,
   Paper,
   MenuItem,
-  Chip,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -28,6 +27,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { Sale, Product } from '../../types';
 
@@ -61,13 +61,12 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
 
   // Estados do formulário
   const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [status, setStatus] = useState<'pendente' | 'paga' | 'cancelada'>('pendente');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<SaleItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productCode, setProductCode] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -75,8 +74,6 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
   useEffect(() => {
     if (sale && open) {
       setCustomerName(sale.cliente || '');
-      setCustomerPhone(sale.customerPhone || '');
-      setCustomerAddress(sale.customerAddress || '');
       setPaymentMethod(sale.formaPagamento || '');
       setStatus(sale.status || 'pendente');
       setNotes(sale.notes || '');
@@ -115,13 +112,12 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
   useEffect(() => {
     if (!open) {
       setCustomerName('');
-      setCustomerPhone('');
-      setCustomerAddress('');
       setPaymentMethod('');
       setStatus('pendente');
       setNotes('');
       setItems([]);
       setSelectedProduct(null);
+      setProductCode('');
       setQuantity(1);
     }
   }, [open]);
@@ -149,7 +145,29 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
 
     setItems([...items, newItem]);
     setSelectedProduct(null);
+    setProductCode('');
     setQuantity(1);
+  };
+
+  // Buscar produto por código
+  const handleSearchByCode = () => {
+    if (!productCode.trim()) {
+      onSuccess('Digite um código de produto', 'warning');
+      return;
+    }
+
+    const product = products.find(p => 
+      p.codigo?.toLowerCase() === productCode.toLowerCase() ||
+      p.id?.toString() === productCode ||
+      p._id?.toString() === productCode
+    );
+
+    if (product) {
+      setSelectedProduct(product);
+      onSuccess('Produto encontrado!', 'success');
+    } else {
+      onSuccess('Produto não encontrado', 'error');
+    }
   };
 
   // Remover item
@@ -194,8 +212,6 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
       const saleData = {
         id: sale?.id || sale?._id,
         cliente: customerName,
-        customerPhone,
-        customerAddress,
         formaPagamento: paymentMethod,
         status,
         notes,
@@ -248,33 +264,13 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
             </Typography>
           </Grid>
           
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Nome do Cliente"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Telefone"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Endereço"
-              value={customerAddress}
-              onChange={(e) => setCustomerAddress(e.target.value)}
-              multiline
-              rows={2}
             />
           </Grid>
 
@@ -333,16 +329,43 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
             </Typography>
           </Grid>
 
+          {/* Busca por código */}
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Código do Produto"
+              value={productCode}
+              onChange={(e) => setProductCode(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchByCode();
+                }
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={2}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleSearchByCode}
+              startIcon={<SearchIcon />}
+              sx={{ height: '56px' }}
+            >
+              Buscar
+            </Button>
+          </Grid>
+
           <Grid item xs={12} sm={6}>
             <Autocomplete
               value={selectedProduct}
               onChange={(_, value) => setSelectedProduct(value)}
               options={products}
-              getOptionLabel={(option) => `${option.nome || option.name} - R$ ${(option.preco || option.price || 0).toFixed(2)}`}
+              getOptionLabel={(option) => `${option.codigo ? `[${option.codigo}] ` : ''}${option.nome || option.name} - R$ ${(option.preco || option.price || 0).toFixed(2)}`}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Selecionar Produto"
+                  label="Ou Selecionar Produto"
                   fullWidth
                 />
               )}
