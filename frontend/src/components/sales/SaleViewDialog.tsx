@@ -18,7 +18,6 @@ import {
 import { Close as CloseIcon, Print as PrintIcon, Share as ShareIcon } from '@mui/icons-material';
 import { Sale } from '../../types';
 import { printReceipt, shareReceipt } from '../../utils/receiptUtils';
-import { de } from 'date-fns/locale';
 
 interface SaleViewDialogProps {
   open: boolean;

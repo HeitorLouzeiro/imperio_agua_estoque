@@ -186,6 +186,14 @@ const SalesTable: React.FC<SalesTableProps> = ({
         pageSizeOptions={isMobile ? [5, 10] : [5, 10, 25]}
         disableRowSelectionOnClick
         getRowId={(row) => row.id || row._id}
+        localeText={{
+          noRowsLabel: 'Nenhuma venda encontrada',
+          footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
+          MuiTablePagination: {
+            labelRowsPerPage: 'Linhas por página:',
+            labelDisplayedRows: ({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+          },
+        }}
         sx={{
           '& .MuiDataGrid-cell:focus': {
             outline: 'none',

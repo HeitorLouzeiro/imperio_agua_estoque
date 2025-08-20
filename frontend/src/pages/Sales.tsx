@@ -5,14 +5,24 @@ import {
   Typography, 
   Snackbar, 
   Alert,
-  Button
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { 
-  Add as AddIcon
+  Add as AddIcon,
+  Receipt as ReceiptIcon,
+  TrendingUp as TrendingUpIcon,
+  AttachMoney as MoneyIcon,
+  Today as TodayIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import Layout from '../components/common/Layout';
 import { 
-  SalesStats,
   SalesFilters, 
   SalesTable,
   SaleViewDialog,
@@ -25,9 +35,13 @@ import { productService, salesService } from '../services';
 import { Sale, Product } from '../types';
 
 const Sales = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   // State para filtros e dialogs
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
@@ -74,7 +88,9 @@ const Sales = () => {
     const matchesDate = !dateFilter || 
       new Date(sale.dataVenda || sale.createdAt).toDateString() === dateFilter.toDateString();
 
-    return matchesSearch && matchesDate;
+    const matchesStatus = statusFilter === '' || sale.status === statusFilter;
+
+    return matchesSearch && matchesDate && matchesStatus;
   });
 
   // Lista de clientes recentes
@@ -152,41 +168,189 @@ const Sales = () => {
 
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
-        <Paper sx={{ p: 3 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h4" gutterBottom>
-              Vendas
+      <Box sx={{ mb: 4 }}>
+        {/* Header */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between', 
+          alignItems: isMobile ? 'stretch' : 'center',
+          mb: 3,
+          gap: 2
+        }}>
+          <Box>
+            <Typography variant="h4" fontWeight="bold" color="primary">
+              Gerenciamento de Vendas
             </Typography>
-            
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AddIcon />}
-              onClick={handleQuickSale}
-              sx={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                '&:hover': { background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)' },
-                fontSize: '1.1rem',
-                px: 3
-              }}
-            >
-              Nova Venda
-            </Button>
+            <Typography variant="body1" color="text.secondary">
+              Controle completo de vendas e faturamento
+            </Typography>
           </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleQuickSale}
+            size={isMobile ? "medium" : "large"}
+            sx={{ 
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3
+            }}
+          >
+            Nova Venda
+          </Button>
+        </Box>
 
-          {/* Estatísticas */}
-          <SalesStats statistics={statistics} />
+        {/* Estatísticas */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="primary">
+                      {statistics.totalVendas}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total de Vendas
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+                    <ReceiptIcon />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
 
-          {/* Filtros */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="info.main">
+                      {statistics.vendasHoje}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Vendas Hoje
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
+                    <TodayIcon />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="success.main">
+                      R$ {statistics.receitaTotal.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Receita Total
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
+                    <MoneyIcon />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="warning.main">
+                      R$ {statistics.receitaHoje.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Receita Hoje
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
+                    <TrendingUpIcon />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Filtros */}
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <SearchIcon sx={{ mr: 1 }} />
+            Filtros de Busca
+          </Typography>
           <SalesFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             dateFilter={dateFilter}
             setDateFilter={setDateFilter}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
           />
+        </Paper>
 
-          {/* Tabela de Vendas */}
+        {/* Tabela */}
+        <Paper sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+                <ReceiptIcon sx={{ mr: 1 }} />
+                Lista de Vendas ({filteredSales.length})
+              </Typography>
+              {(searchTerm || dateFilter || statusFilter) && (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {searchTerm && (
+                    <Typography variant="caption" sx={{ 
+                      px: 1, 
+                      py: 0.5, 
+                      bgcolor: 'primary.light', 
+                      color: 'primary.contrastText', 
+                      borderRadius: 1 
+                    }}>
+                      Busca: "{searchTerm}"
+                    </Typography>
+                  )}
+                  {dateFilter && (
+                    <Typography variant="caption" sx={{ 
+                      px: 1, 
+                      py: 0.5, 
+                      bgcolor: 'info.light', 
+                      color: 'info.contrastText', 
+                      borderRadius: 1 
+                    }}>
+                      Data: {dateFilter.toLocaleDateString('pt-BR')}
+                    </Typography>
+                  )}
+                  {statusFilter && (
+                    <Typography variant="caption" sx={{ 
+                      px: 1, 
+                      py: 0.5, 
+                      bgcolor: statusFilter === 'paga' ? 'success.light' : 
+                              statusFilter === 'pendente' ? 'warning.light' : 'error.light',
+                      color: statusFilter === 'paga' ? 'success.contrastText' : 
+                             statusFilter === 'pendente' ? 'warning.contrastText' : 'error.contrastText',
+                      borderRadius: 1 
+                    }}>
+                      Status: {statusFilter === 'paga' ? 'Paga' : 
+                               statusFilter === 'pendente' ? 'Pendente' : 'Cancelada'}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Box>
           <SalesTable
             sales={filteredSales}
             loading={salesLoading}
@@ -196,6 +360,7 @@ const Sales = () => {
             onPrintSale={handlePrintSale}
           />
         </Paper>
+
       </Box>
 
       {/* Dialog de Visualização */}

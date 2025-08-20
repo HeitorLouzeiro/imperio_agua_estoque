@@ -10,7 +10,6 @@ import {
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { 
   Edit, 
-  Block, 
   Person as PersonIcon,
   ToggleOn,
   ToggleOff
@@ -119,22 +118,23 @@ const UserTable: React.FC<UserTableProps> = ({
   ];
 
   return (
-    <Paper sx={{ height: 440, width: '100%', mb: 3 }}>
+    <Paper sx={{ height: 500 }}>
       <DataGrid
+        sx={{ borderRadius: 0 }}
         rows={users}
         columns={columns}
         loading={loading}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 8, page: 0 },
-          },
-        }}
-        pageSizeOptions={[8, 16]}
+        pageSizeOptions={[10, 25, 50]}
+        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
         disableRowSelectionOnClick
         getRowId={(row) => row.id}
         localeText={{
           noRowsLabel: 'Nenhum usuário encontrado',
           footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
+          MuiTablePagination: {
+            labelRowsPerPage: 'Linhas por página:',
+            labelDisplayedRows: ({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+          },
         }}
       />
     </Paper>

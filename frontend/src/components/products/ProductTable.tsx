@@ -9,7 +9,6 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Edit as EditIcon,
-  Block as BlockIcon,
   Visibility as ViewIcon,
   Warning as WarningIcon,
   ToggleOn,
@@ -112,12 +111,21 @@ const ProductTable: React.FC<ProductTableProps> = ({
   return (
     <Paper sx={{ height: 500 }}>
       <DataGrid
+        sx={{borderRadius:0}}
         rows={products}
         columns={columns}
         loading={loading}
         pageSizeOptions={[10, 25, 50]}
         initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
         disableRowSelectionOnClick
+        localeText={{
+          noRowsLabel: 'Nenhum produto encontrado',
+          footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
+          MuiTablePagination: {
+            labelRowsPerPage: 'Linhas por página:',
+            labelDisplayedRows: ({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+          },
+        }}
       />
     </Paper>
   );

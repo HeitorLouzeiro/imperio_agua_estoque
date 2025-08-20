@@ -21,9 +21,10 @@ interface PieChartData {
 interface ProductsChartProps {
   data: PieChartData[];
   loading?: boolean;
+  title?: string;
 }
 
-const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false }) => (
+const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false, title = 'Produtos Mais Vendidos' }) => (
   <Paper
     elevation={0}
     sx={{
@@ -31,11 +32,12 @@ const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false }) 
       borderRadius: 3,
       border: '1px solid',
       borderColor: 'divider',
-      height: '100%',
+      height: 600,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
     }}
   >
     <Typography variant="h6" gutterBottom fontWeight="bold">
-      Produtos Mais Vendidos
+      {title}
     </Typography>
     
     {loading ? (
@@ -57,14 +59,14 @@ const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false }) 
         <Typography color="text.secondary">Nenhum dado disponível</Typography>
       </Box>
     ) : (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={120}
+            innerRadius={50}
+            outerRadius={100}
             paddingAngle={5}
             dataKey="value"
           >
@@ -89,13 +91,14 @@ const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false }) 
     )}
     
     {!loading && data.length > 0 && (
-      <Box mt={2}>
+      <Box mt={3}>
         {data.map((entry, index) => (
           <Box
             key={index}
             display="flex"
             alignItems="center"
-            mb={1}
+            mb={1.5}
+            sx={{ minHeight: '24px' }}
           >
             <Box
               sx={{
@@ -103,10 +106,19 @@ const ProductsChart: React.FC<ProductsChartProps> = ({ data, loading = false }) 
                 height: 12,
                 backgroundColor: entry.color,
                 borderRadius: '50%',
-                mr: 1,
+                mr: 1.5,
+                flexShrink: 0,
               }}
             />
-            <Typography variant="body2" color="text.secondary">
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ 
+                lineHeight: 1.2,
+                wordBreak: 'break-word',
+                flex: 1,
+              }}
+            >
               {entry.name}: {entry.value} unidades
             </Typography>
           </Box>

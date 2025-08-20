@@ -23,9 +23,10 @@ interface SalesChartData {
 interface SalesChartProps {
   data: SalesChartData[];
   loading?: boolean;
+  title?: string;
 }
 
-const SalesChart: React.FC<SalesChartProps> = ({ data, loading = false }) => (
+const SalesChart: React.FC<SalesChartProps> = ({ data, loading = false, title = 'Vendas dos Últimos 6 Meses' }) => (
   <Paper
     elevation={0}
     sx={{
@@ -33,11 +34,12 @@ const SalesChart: React.FC<SalesChartProps> = ({ data, loading = false }) => (
       borderRadius: 3,
       border: '1px solid',
       borderColor: 'divider',
-      height: '100%',
+      height: 600,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
     }}
   >
     <Typography variant="h6" gutterBottom fontWeight="bold">
-      Vendas dos Últimos 6 Meses
+      {title}
     </Typography>
     
     {loading ? (
@@ -50,7 +52,7 @@ const SalesChart: React.FC<SalesChartProps> = ({ data, loading = false }) => (
         <Typography color="text.secondary">Carregando dados...</Typography>
       </Box>
     ) : (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={480}>
         <AreaChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis 

@@ -34,7 +34,7 @@ export const login = async (req, res) => {
     if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
     const valido = await bcrypt.compare(senha, usuario.senha);
     if (!valido) return res.status(401).json({ erro: 'Senha incorreta' });
-    const token = jwt.sign({ id: usuario._id, papel: usuario.papel }, process.env.JWT_SECRET || 'segredo', { expiresIn: '1d' });
+    const token = jwt.sign({ id: usuario._id, papel: usuario.papel }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
     res.json({ token });  
   } catch (err) {
     res.status(400).json({ erro: err.message });
@@ -52,7 +52,15 @@ export const listarUsuarios = async (req, res) => {
 
 export const obterPerfil = async (req, res) => {
   try {
-    const usuario = await User.findOne({ _id: req.userId, ativo: true }).select('-senha');
+    // Criar ObjectId a partir do string se necessário
+    let objectId;
+    try {
+      objectId = new mongoose.Types.ObjectId(req.userId);
+    } catch (error) {
+      return res.status(400).json({ erro: 'ID de usuário inválido' });
+    }
+    
+    const usuario = await User.findOne({ _id: objectId, ativo: true }).select('-senha');
     if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
     res.json({
       id: usuario._id,
@@ -96,7 +104,7 @@ export const atualizarSenhaViaToken = async (req, res) => {
   try {
     const { token, novaSenha } = req.body;
     if (!token || !novaSenha) return res.status(400).json({ erro: 'Token e nova senha são obrigatórios' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const usuario = await User.findOne({ _id: decoded.id, ativo: true });
     if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
     const hash = await bcrypt.hash(novaSenha, 10);
@@ -116,23 +124,29 @@ export const atualizarPerfil = async (req, res) => {
     const { nome, email, senhaAtual, novaSenha, papel } = req.body;
     const userId = req.params.id || req.userId; // Suporta tanto URL param quanto token
     
-    // Validar se o ID é um ObjectId válido
-    if (!isValidObjectId(userId)) {
+    // Criar ObjectId a partir do string se necessário
+    let objectId;
+    try {
+      objectId = new mongoose.Types.ObjectId(userId);
+    } catch (error) {
       return res.status(400).json({ erro: 'ID de usuário inválido' });
     }
     
-    const usuario = await User.findOne({ _id: toObjectId(userId), ativo: true });
+    const usuario = await User.findOne({ _id: objectId, ativo: true });
     if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
     
-    // Se está alterando senha, validar senha atual
-    if (novaSenha) {
-      if (!senhaAtual) {
-        return res.status(400).json({ erro: 'Senha atual é obrigatória para alterar a senha' });
-      }
-      
+    // Se há senhaAtual, sempre validar (mesmo sem novaSenha, para validação)
+    if (senhaAtual) {
       const senhaValida = await bcrypt.compare(senhaAtual, usuario.senha);
       if (!senhaValida) {
         return res.status(401).json({ erro: 'Senha atual incorreta' });
+      }
+    }
+    
+    // Se está alterando senha, precisa ter senhaAtual
+    if (novaSenha) {
+      if (!senhaAtual) {
+        return res.status(400).json({ erro: 'Senha atual é obrigatória para alterar a senha' });
       }
       
       const hashNovaSenha = await bcrypt.hash(novaSenha, 10);

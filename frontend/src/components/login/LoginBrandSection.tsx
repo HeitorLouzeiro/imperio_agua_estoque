@@ -12,7 +12,6 @@ import {
   Security,
   Speed,
   Analytics,
-  CloudDone,
 } from '@mui/icons-material';
 
 interface Feature {

@@ -22,7 +22,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error) => {
+    // Só redirecionar para login em casos específicos de erro 401
     if (error.response?.status === 401) {
+      const errorMessage = error.response?.data?.erro || error.response?.data?.message || '';
+      
+      // Não redirecionar se for erro de senha atual incorreta
+      if (errorMessage.includes('Senha atual incorreta') || 
+          errorMessage.includes('senha atual') ||
+          error.config?.url?.includes('/perfil')) {
+        // Apenas retornar o erro sem redirecionar
+        return Promise.reject(error);
+      }
+      
+      // Para outros tipos de erro 401 (token inválido, expirado, etc)
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

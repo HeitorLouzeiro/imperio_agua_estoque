@@ -27,7 +27,13 @@ const Profile = () => {
     handleTogglePasswordFields,
     handleSave,
     handleSnackbarClose,
-    isFormValid
+    isFormValid,
+    isCurrentPasswordValid,
+    isNewPasswordValid,
+    isPasswordConfirmationValid,
+    getPasswordValidationMessage,
+    validationState,
+    validateCurrentPassword
   } = useProfileManagement();
 
   if (!user) {
@@ -57,6 +63,12 @@ const Profile = () => {
           showPasswordFields={showPasswordFields}
           handleChange={handleChange}
           handleTogglePasswordFields={handleTogglePasswordFields}
+          isCurrentPasswordValid={isCurrentPasswordValid}
+          isNewPasswordValid={isNewPasswordValid}
+          isPasswordConfirmationValid={isPasswordConfirmationValid}
+          getPasswordValidationMessage={getPasswordValidationMessage}
+          validationState={validationState}
+          validateCurrentPassword={validateCurrentPassword}
         />
         
         <SecurityNotice />

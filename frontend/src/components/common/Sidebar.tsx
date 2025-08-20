@@ -15,10 +15,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import {
-  SpaceDashboard,
-  Inventory2,
-  ShoppingBag,
-  Groups,
   LocalGroceryStore,
   AccountCircle,
   Analytics,

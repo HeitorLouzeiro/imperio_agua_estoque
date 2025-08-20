@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export interface AppNotification {
@@ -47,16 +47,16 @@ export const useNotifications = () => {
     }
   };
 
-  // Função para limpar notificações lidas do localStorage
-  const clearReadNotifications = (): void => {
-    try {
-      localStorage.removeItem('readNotifications');
-    } catch (error) {
-      console.error('Erro ao limpar notificações lidas:', error);
-    }
-  };
+  // Função para limpar notificações lidas do localStorage (não utilizada atualmente)
+  // const clearReadNotifications = (): void => {
+  //   try {
+  //     localStorage.removeItem('readNotifications');
+  //   } catch (error) {
+  //     console.error('Erro ao limpar notificações lidas:', error);
+  //   }
+  // };
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -145,7 +145,7 @@ export const useNotifications = () => {
       setNotifications([]);
       setLoading(false);
     }
-  };
+  }, []);
 
   const getNotificationCount = () => {
     return notifications.length;
@@ -173,7 +173,7 @@ export const useNotifications = () => {
     const interval = setInterval(loadNotifications, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [loadNotifications]);
 
   return {
     notifications,
