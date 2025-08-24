@@ -34,8 +34,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'numero',
       headerName: '#',
-      width: isMobile ? 60 : 80,
-      maxWidth: isMobile ? 0 : undefined,
+      width: isMobile ? 80 : 100,
       renderCell: (params: GridRenderCellParams) => (
         <strong>#{params.value}</strong>
       ),
@@ -43,15 +42,25 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'cliente',
       headerName: 'Cliente',
-      width: isMobile ? 120 : isTablet ? 150 : 200,
-      minWidth: 120,
+      width: isMobile ? 160 : isTablet ? 200 : 250,
+      minWidth: 160,
       flex: !isMobile ? 1 : 0,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ 
+          width: '100%', 
+          textOverflow: 'ellipsis', 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden',
+          textAlign: 'left'
+        }}>
+          {params.value}
+        </Box>
+      ),
     },
     {
       field: 'dataVenda',
       headerName: 'Data',
-      width: isMobile ? 80 : 100,
-      maxWidth: isMobile ? 0 : undefined,
+      width: isMobile ? 100 : 120,
       renderCell: (params: GridRenderCellParams) => {
         const date = new Date(params.value || params.row.createdAt);
         return isMobile ? date.toLocaleDateString('pt-BR', { 
@@ -63,7 +72,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'vendedor',
       headerName: 'Vendedor',
-      width: isMobile ? 0 : isTablet ? 120 : 150,
+      width: isMobile ? 0 : isTablet ? 140 : 170,
       maxWidth: isMobile ? 0 : undefined,
       renderCell: (params: GridRenderCellParams) => 
         params.value?.nome || 'N/A',
@@ -71,7 +80,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'total',
       headerName: 'Total',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 100 : 120,
       renderCell: (params: GridRenderCellParams) => (
         <strong style={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
           R$ {(params.value || 0).toFixed(2)}
@@ -81,7 +90,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'status',
       headerName: 'Status',
-      width: isMobile ? 70 : 100,
+      width: isMobile ? 90 : 120,
       renderCell: (params: GridRenderCellParams) => {
         const status = params.value || 'paga';
         const getStatusColor = (status: string) => {
@@ -124,7 +133,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'actions',
       headerName: 'Ações',
-      width: isMobile ? 80 : 150,
+      width: isMobile ? 70 : 160,
       sortable: false,
       filterable: false,
       renderCell: (params: GridRenderCellParams) => (
@@ -177,18 +186,27 @@ const SalesTable: React.FC<SalesTableProps> = ({
 
   return (
     <Box sx={{ 
-      height: isMobile ? 400 : 500, 
+      height: isMobile ? 450 : 550, 
       width: '100%',
       '& .MuiDataGrid-root': {
         border: 'none',
       },
       '& .MuiDataGrid-columnHeaders': {
-        fontSize: isMobile ? '0.7rem' : '0.875rem',
+        fontSize: isMobile ? '0.75rem' : '0.875rem',
         fontWeight: 'bold',
+        minHeight: isMobile ? '35px' : '56px',
       },
       '& .MuiDataGrid-cell': {
-        fontSize: isMobile ? '0.7rem' : '0.875rem',
-        padding: isMobile ? '2px 4px' : '8px',
+        fontSize: isMobile ? '0.75rem' : '0.875rem',
+        padding: isMobile ? '4px 6px' : '8px',
+        minHeight: isMobile ? '40px' : '52px',
+        whiteSpace: 'normal',
+        lineHeight: '1.2',
+        display: 'flex',
+        alignItems: 'center',
+      },
+      '& .MuiDataGrid-row': {
+        minHeight: isMobile ? '40px' : '52px',
       },
       '& .MuiDataGrid-virtualScroller': {
         overflow: 'auto',
@@ -205,6 +223,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
         }}
         pageSizeOptions={isMobile ? [5, 10] : [5, 10, 25]}
         disableRowSelectionOnClick
+        disableColumnMenu={isMobile}
         getRowId={(row) => row.id || row._id}
         localeText={{
           noRowsLabel: 'Nenhuma venda encontrada',
@@ -237,7 +256,8 @@ const SalesTable: React.FC<SalesTableProps> = ({
             },
           },
         }}
-        density={isMobile ? 'compact' : 'standard'}
+        density={isMobile ? 'standard' : 'standard'}
+        rowHeight={isMobile ? 45 : 56}
       />
     </Box>
   );

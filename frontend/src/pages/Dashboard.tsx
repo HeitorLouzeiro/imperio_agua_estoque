@@ -16,8 +16,6 @@ import {
   ShoppingBag, 
   Inventory2, 
   AttachMoney,
-  Store,
-  Category,
   PeopleAlt,
   FilterAlt as FilterIcon,
   Refresh as RefreshIcon,
