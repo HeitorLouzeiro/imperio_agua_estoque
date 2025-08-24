@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
+import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Chip, useMediaQuery, useTheme, Grid } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
@@ -22,6 +22,10 @@ const SalesFilters: React.FC<SalesFiltersProps> = ({
   setStatusFilter,
   onNewSale
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paga': return 'success';
@@ -40,6 +44,71 @@ const SalesFilters: React.FC<SalesFiltersProps> = ({
     }
   };
 
+  if (isMobile) {
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              label="Buscar vendas"
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              fullWidth
+            />
+          </Grid>
+          
+          <Grid item xs={6}>
+            <DatePicker
+              label="Data"
+              value={dateFilter}
+              onChange={(newValue) => setDateFilter(newValue)}
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true
+                }
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                label="Status"
+                renderValue={(selected) => (
+                  selected ? getStatusLabel(selected) : 'Todos'
+                )}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="paga">
+                  <Chip label="Paga" color="success" size="small" />
+                </MenuItem>
+                <MenuItem value="pendente">
+                  <Chip label="Pendente" color="warning" size="small" />
+                </MenuItem>
+                <MenuItem value="cancelada">
+                  <Chip label="Cancelada" color="error" size="small" />
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
+
   return (
     <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
       <TextField
@@ -55,7 +124,7 @@ const SalesFilters: React.FC<SalesFiltersProps> = ({
             </InputAdornment>
           ),
         }}
-        sx={{ minWidth: 250 }}
+        sx={{ minWidth: isTablet ? 200 : 250 }}
       />
       
       <DatePicker
@@ -65,12 +134,12 @@ const SalesFilters: React.FC<SalesFiltersProps> = ({
         slotProps={{
           textField: {
             size: 'small',
-            sx: { minWidth: 200 }
+            sx: { minWidth: isTablet ? 150 : 200 }
           }
         }}
       />
 
-      <FormControl size="small" sx={{ minWidth: 150 }}>
+      <FormControl size="small" sx={{ minWidth: isTablet ? 120 : 150 }}>
         <InputLabel>Status</InputLabel>
         <Select
           value={statusFilter}

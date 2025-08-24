@@ -135,14 +135,14 @@ export const Dashboard: React.FC = () => {
         </Box>
 
         {/* Filtros de Período */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+        <Paper sx={{ p: isMobile ? 2 : 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <FilterIcon sx={{ mr: 1 }} />
             Filtros de Período
           </Typography>
           
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={3}>
+          <Grid container spacing={isMobile ? 1 : 2} alignItems="flex-end">
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 label="Data Inicial"
                 type="date"
@@ -153,13 +153,17 @@ export const Dashboard: React.FC = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={{ 
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
+                    borderRadius: 2,
+                    fontSize: isMobile ? '0.875rem' : '1rem'
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isMobile ? '0.875rem' : '1rem'
                   }
                 }}
               />
             </Grid>
             
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 label="Data Final"
                 type="date"
@@ -170,21 +174,38 @@ export const Dashboard: React.FC = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={{ 
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
+                    borderRadius: 2,
+                    fontSize: isMobile ? '0.875rem' : '1rem'
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isMobile ? '0.875rem' : '1rem'
                   }
                 }}
               />
             </Grid>
             
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: isMobile ? 0.5 : 1, 
+                flexWrap: 'wrap',
+                justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                alignItems: 'center'
+              }}>
                 <Button
                   variant="contained"
                   onClick={handleApplyFilter}
                   disabled={!startDate || !endDate}
                   size="small"
-                  startIcon={<CalendarIcon />}
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  startIcon={!isMobile ? <CalendarIcon /> : undefined}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none',
+                    minWidth: isMobile ? '70px' : '100px',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1.5 : 2,
+                    height: '40px'
+                  }}
                 >
                   Aplicar
                 </Button>
@@ -193,8 +214,15 @@ export const Dashboard: React.FC = () => {
                   variant="outlined"
                   onClick={handleClearFilter}
                   size="small"
-                  startIcon={<RefreshIcon />}
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  startIcon={!isMobile ? <RefreshIcon /> : undefined}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none',
+                    minWidth: isMobile ? '70px' : '100px',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1.5 : 2,
+                    height: '40px'
+                  }}
                 >
                   Limpar
                 </Button>
@@ -203,7 +231,14 @@ export const Dashboard: React.FC = () => {
                   variant="text"
                   onClick={() => handleQuickFilter(7)}
                   size="small"
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none',
+                    minWidth: isMobile ? '50px' : '70px',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1 : 1.5,
+                    height: '40px'
+                  }}
                 >
                   7 dias
                 </Button>
@@ -212,7 +247,14 @@ export const Dashboard: React.FC = () => {
                   variant="text"
                   onClick={() => handleQuickFilter(30)}
                   size="small"
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none',
+                    minWidth: isMobile ? '55px' : '75px',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1 : 1.5,
+                    height: '40px'
+                  }}
                 >
                   30 dias
                 </Button>
@@ -221,93 +263,154 @@ export const Dashboard: React.FC = () => {
                   variant="text"
                   onClick={() => handleQuickFilter(90)}
                   size="small"
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none',
+                    minWidth: isMobile ? '55px' : '75px',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1 : 1.5,
+                    height: '40px'
+                  }}
                 >
                   90 dias
                 </Button>
               </Box>
             </Grid>
           </Grid>
-        </Paper>
-
-        {/* Estatísticas Principais */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="success.main">
-                      R$ {stats.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Receita Total
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
+        </Paper>        {/* Cards de Estatísticas */}
+        <Grid container spacing={isMobile ? 1.5 : 3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} lg={3}>
+            <Card sx={{ 
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3, pb: isMobile ? '16px !important' : '24px !important' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant={isMobile ? "body2" : "h6"} color="text.secondary" fontWeight="medium">
+                    Receita Total
+                  </Typography>
+                  <Avatar sx={{ 
+                    bgcolor: 'success.main', 
+                    width: isMobile ? 40 : 48, 
+                    height: isMobile ? 40 : 48 
+                  }}>
                     <AttachMoney />
                   </Avatar>
                 </Box>
+                <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="text.primary">
+                  R$ {stats.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="primary.main">
-                      {stats.totalSales}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de Vendas
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                    <Store />
+          
+          <Grid item xs={12} sm={6} lg={3}>
+            <Card sx={{ 
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3, pb: isMobile ? '16px !important' : '24px !important' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant={isMobile ? "body2" : "h6"} color="text.secondary" fontWeight="medium">
+                    Total de Vendas
+                  </Typography>
+                  <Avatar sx={{ 
+                    bgcolor: 'primary.main', 
+                    width: isMobile ? 40 : 48, 
+                    height: isMobile ? 40 : 48 
+                  }}>
+                    <ShoppingBag />
                   </Avatar>
                 </Box>
+                <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="text.primary">
+                  {stats.totalSales}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="warning.main">
-                      {stats.totalProducts}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de Produtos
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
-                    <Category />
+          
+          <Grid item xs={12} sm={6} lg={3}>
+            <Card sx={{ 
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3, pb: isMobile ? '16px !important' : '24px !important' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant={isMobile ? "body2" : "h6"} color="text.secondary" fontWeight="medium">
+                    Total de Produtos
+                  </Typography>
+                  <Avatar sx={{ 
+                    bgcolor: 'warning.main', 
+                    width: isMobile ? 40 : 48, 
+                    height: isMobile ? 40 : 48 
+                  }}>
+                    <Inventory2 />
                   </Avatar>
                 </Box>
+                <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="text.primary">
+                  {stats.totalProducts}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="info.main">
-                      {stats.totalUsers}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de Usuários
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
+          
+          <Grid item xs={12} sm={6} lg={3}>
+            <Card sx={{ 
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3, pb: isMobile ? '16px !important' : '24px !important' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant={isMobile ? "body2" : "h6"} color="text.secondary" fontWeight="medium">
+                    Total de Usuários
+                  </Typography>
+                  <Avatar sx={{ 
+                    bgcolor: 'info.main', 
+                    width: isMobile ? 40 : 48, 
+                    height: isMobile ? 40 : 48 
+                  }}>
                     <PeopleAlt />
                   </Avatar>
                 </Box>
+                <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="text.primary">
+                  {stats.totalUsers}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -315,17 +418,17 @@ export const Dashboard: React.FC = () => {
 
         {/* Gráficos */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} lg={6}>
             <SalesChart data={salesData} title={getChartTitle()} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} lg={6}>
             <ProductsChart data={pieData} title="Produtos Mais Vendidos" />
           </Grid>
         </Grid>
 
         {/* Alertas e Vendas Recentes */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} lg={6}>
             <Paper sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
               <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -338,7 +441,7 @@ export const Dashboard: React.FC = () => {
               </Box>
             </Paper>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} lg={6}>
             <Paper sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
               <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>

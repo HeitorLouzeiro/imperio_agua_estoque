@@ -9,7 +9,9 @@ import {
   Chip,
   Typography,
   IconButton,
-  Tooltip
+  Tooltip,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,6 +42,10 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   onClearFilters,
   onRefresh
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
   const clearFilters = () => {
     setSearchTerm('');
     setRoleFilter('');
@@ -51,31 +57,35 @@ const UserFilters: React.FC<UserFiltersProps> = ({
 
   return (
     <Box>
-      <Grid container spacing={3} alignItems="center">
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={isMobile ? 1.5 : 2} alignItems="flex-end">
+        <Grid item xs={12} sm={12} md={4}>
           <TextField
             fullWidth
             placeholder="Buscar por nome ou email"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             variant="outlined"
-            size="medium"
+            size={isMobile ? "small" : "medium"}
             sx={{ 
               '& .MuiOutlinedInput-root': { 
                 borderRadius: 2,
-                backgroundColor: 'background.paper'
+                backgroundColor: 'background.paper',
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
               }
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                 </InputAdornment>
               ),
               endAdornment: searchTerm && (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={() => setSearchTerm('')}>
-                    <ClearIcon />
+                    <ClearIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />
                   </IconButton>
                 </InputAdornment>
               )
@@ -83,7 +93,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
           />
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <TextField
             fullWidth
             select
@@ -91,17 +101,23 @@ const UserFilters: React.FC<UserFiltersProps> = ({
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             variant="outlined"
-            size="medium"
+            size={isMobile ? "small" : "medium"}
             sx={{ 
               '& .MuiOutlinedInput-root': { 
                 borderRadius: 2,
                 backgroundColor: 'background.paper'
+              },
+              '& .MuiInputLabel-root': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
               }
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <GroupIcon color="action" />
+                  <GroupIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                 </InputAdornment>
               )
             }}
@@ -112,7 +128,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
           </TextField>
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <TextField
             fullWidth
             select
@@ -120,17 +136,23 @@ const UserFilters: React.FC<UserFiltersProps> = ({
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             variant="outlined"
-            size="medium"
+            size={isMobile ? "small" : "medium"}
             sx={{ 
               '& .MuiOutlinedInput-root': { 
                 borderRadius: 2,
                 backgroundColor: 'background.paper'
+              },
+              '& .MuiInputLabel-root': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
               }
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <StatusIcon color="action" />
+                  <StatusIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                 </InputAdornment>
               )
             }}
@@ -142,35 +164,46 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         </Grid>
 
         <Grid item xs={12} md={2}>
-          <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            flexDirection: isMobile ? 'row' : 'column',
+            justifyContent: isMobile ? 'space-between' : 'flex-start'
+          }}>
             <Tooltip title="Atualizar lista">
               <Button
-                fullWidth
+                fullWidth={!isMobile}
                 variant="outlined"
                 onClick={onRefresh || (() => window.location.reload())}
-                startIcon={<RefreshIcon />}
+                startIcon={!isMobile ? <RefreshIcon /> : undefined}
+                size={isMobile ? "small" : "medium"}
                 sx={{ 
                   borderRadius: 2,
                   textTransform: 'none',
-                  fontWeight: 'medium'
+                  fontWeight: 'medium',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  minWidth: isMobile ? '80px' : 'auto',
+                  flex: isMobile ? 1 : 'none'
                 }}
               >
-                Atualizar
+                {isMobile ? 'Atualizar' : 'Atualizar'}
               </Button>
             </Tooltip>
             
             {hasActiveFilters && (
               <Tooltip title="Limpar filtros">
                 <Button
-                  fullWidth
+                  fullWidth={!isMobile}
                   variant="text"
                   onClick={clearFilters}
-                  startIcon={<ClearIcon />}
+                  startIcon={!isMobile ? <ClearIcon /> : undefined}
                   size="small"
                   sx={{ 
                     borderRadius: 2,
                     textTransform: 'none',
-                    fontSize: '0.875rem'
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    minWidth: isMobile ? '70px' : 'auto',
+                    flex: isMobile ? 1 : 'none'
                   }}
                 >
                   Limpar
@@ -184,7 +217,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
       {/* Filtros ativos */}
       {hasActiveFilters && (
         <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
             Filtros ativos:
           </Typography>
           {searchTerm && (
@@ -194,6 +227,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
               size="small"
               color="primary"
               variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
             />
           )}
           {roleFilter && (
@@ -203,6 +237,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
               size="small"
               color="primary"
               variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
             />
           )}
           {statusFilter !== 'todos' && (
@@ -212,6 +247,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
               size="small"
               color="primary"
               variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
             />
           )}
         </Box>

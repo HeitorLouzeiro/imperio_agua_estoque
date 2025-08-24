@@ -27,13 +27,15 @@ const SalesTable: React.FC<SalesTableProps> = ({
   onPrintSale
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+  
   const columns: GridColDef[] = [
     {
       field: 'numero',
-      headerName: 'Número',
-      width: isMobile ? 80 : 120,
-      minWidth: 80,
+      headerName: '#',
+      width: isMobile ? 60 : 80,
+      maxWidth: isMobile ? 0 : undefined,
       renderCell: (params: GridRenderCellParams) => (
         <strong>#{params.value}</strong>
       ),
@@ -41,37 +43,45 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'cliente',
       headerName: 'Cliente',
-      width: 200,
-      flex: 1,
+      width: isMobile ? 120 : isTablet ? 150 : 200,
+      minWidth: 120,
+      flex: !isMobile ? 1 : 0,
     },
     {
       field: 'dataVenda',
       headerName: 'Data',
-      width: 120,
+      width: isMobile ? 80 : 100,
+      maxWidth: isMobile ? 0 : undefined,
       renderCell: (params: GridRenderCellParams) => {
         const date = new Date(params.value || params.row.createdAt);
-        return date.toLocaleDateString('pt-BR');
+        return isMobile ? date.toLocaleDateString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit' 
+        }) : date.toLocaleDateString('pt-BR');
       },
     },
     {
       field: 'vendedor',
       headerName: 'Vendedor',
-      width: 150,
+      width: isMobile ? 0 : isTablet ? 120 : 150,
+      maxWidth: isMobile ? 0 : undefined,
       renderCell: (params: GridRenderCellParams) => 
         params.value?.nome || 'N/A',
     },
     {
       field: 'total',
       headerName: 'Total',
-      width: 120,
+      width: isMobile ? 80 : 100,
       renderCell: (params: GridRenderCellParams) => (
-        <strong>R$ {(params.value || 0).toFixed(2)}</strong>
+        <strong style={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
+          R$ {(params.value || 0).toFixed(2)}
+        </strong>
       ),
     },
     {
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      width: isMobile ? 70 : 100,
       renderCell: (params: GridRenderCellParams) => {
         const status = params.value || 'paga';
         const getStatusColor = (status: string) => {
@@ -90,7 +100,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
         return (
           <Tooltip title="Clique para editar status">
             <Chip
-              label={status.charAt(0).toUpperCase() + status.slice(1)}
+              label={isMobile ? status.charAt(0).toUpperCase() : status.charAt(0).toUpperCase() + status.slice(1)}
               color={getStatusColor(status) as any}
               size="small"
               onClick={(e) => {
@@ -99,6 +109,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
               }}
               sx={{
                 cursor: 'pointer',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
                 '&:hover': {
                   opacity: 0.8,
                   transform: 'scale(1.05)',
@@ -113,47 +124,52 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'actions',
       headerName: 'Ações',
-      width: 150,
+      width: isMobile ? 80 : 150,
       sortable: false,
       filterable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <Box>
+        <Box sx={{ display: 'flex', gap: isMobile ? 0 : 0.5 }}>
           <Tooltip title="Visualizar">
             <IconButton 
               size="small" 
               onClick={() => onViewSale(params.row)}
               color="primary"
+              sx={{ p: isMobile ? 0.5 : 1 }}
             >
-              <ViewIcon />
+              <ViewIcon sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Editar Venda">
-            <IconButton 
-              size="small" 
-              onClick={() => onEditSale(params.row)}
-              color="warning"
-            >
-              <EditNoteIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Editar Status">
-            <IconButton 
-              size="small" 
-              onClick={() => onEditStatus(params.row)}
-              color="secondary"
-            >
-              <StatusIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Imprimir">
-            <IconButton 
-              size="small" 
-              onClick={() => onPrintSale(params.row)}
-              color="info"
-            >
-              <PrintIcon />
-            </IconButton>
-          </Tooltip>
+          {!isMobile && (
+            <>
+              <Tooltip title="Editar Venda">
+                <IconButton 
+                  size="small" 
+                  onClick={() => onEditSale(params.row)}
+                  color="warning"
+                >
+                  <EditNoteIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Editar Status">
+                <IconButton 
+                  size="small" 
+                  onClick={() => onEditStatus(params.row)}
+                  color="secondary"
+                >
+                  <StatusIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Imprimir">
+                <IconButton 
+                  size="small" 
+                  onClick={() => onPrintSale(params.row)}
+                  color="info"
+                >
+                  <PrintIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       ),
     },
@@ -161,17 +177,21 @@ const SalesTable: React.FC<SalesTableProps> = ({
 
   return (
     <Box sx={{ 
-      height: isMobile ? 500 : 400, 
+      height: isMobile ? 400 : 500, 
       width: '100%',
       '& .MuiDataGrid-root': {
         border: 'none',
       },
       '& .MuiDataGrid-columnHeaders': {
-        fontSize: isMobile ? '0.75rem' : '0.875rem',
+        fontSize: isMobile ? '0.7rem' : '0.875rem',
+        fontWeight: 'bold',
       },
       '& .MuiDataGrid-cell': {
-        fontSize: isMobile ? '0.75rem' : '0.875rem',
-        padding: isMobile ? '4px' : '8px',
+        fontSize: isMobile ? '0.7rem' : '0.875rem',
+        padding: isMobile ? '2px 4px' : '8px',
+      },
+      '& .MuiDataGrid-virtualScroller': {
+        overflow: 'auto',
       },
     }}>
       <DataGrid
@@ -190,8 +210,11 @@ const SalesTable: React.FC<SalesTableProps> = ({
           noRowsLabel: 'Nenhuma venda encontrada',
           footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
           MuiTablePagination: {
-            labelRowsPerPage: 'Linhas por página:',
-            labelDisplayedRows: ({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+            labelRowsPerPage: isMobile ? 'Por página:' : 'Linhas por página:',
+            labelDisplayedRows: ({ from, to, count }) => 
+              isMobile 
+                ? `${from}-${to} de ${count !== -1 ? count : `+${to}`}`
+                : `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
           },
         }}
         sx={{
@@ -205,7 +228,13 @@ const SalesTable: React.FC<SalesTableProps> = ({
             display: isMobile ? 'none' : 'block',
           },
           '& .MuiDataGrid-toolbarContainer': {
-            padding: isMobile ? '8px' : '16px',
+            padding: isMobile ? '4px' : '16px',
+          },
+          '& .MuiDataGrid-footerContainer': {
+            minHeight: isMobile ? '45px' : '52px',
+            '& .MuiTablePagination-root': {
+              fontSize: isMobile ? '0.75rem' : '0.875rem',
+            },
           },
         }}
         density={isMobile ? 'compact' : 'standard'}

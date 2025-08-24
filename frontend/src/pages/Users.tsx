@@ -130,81 +130,157 @@ const Users: React.FC = () => {
         </Box>
 
         {/* Cards de Estatísticas */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+        <Grid container spacing={isMobile ? 1.5 : 3} sx={{ mb: 3 }}>
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              borderRadius: 3, 
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              height: '100%',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? 1 : 0
+                }}>
+                  <Box sx={{ textAlign: isMobile ? 'center' : 'left' }}>
+                    <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="primary">
                       {totalUsers}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant={isMobile ? "caption" : "body2"} color="text.secondary">
                       Total de Usuários
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                    <PeopleIcon />
+                  <Avatar sx={{ 
+                    bgcolor: 'primary.main', 
+                    width: isMobile ? 32 : 48, 
+                    height: isMobile ? 32 : 48 
+                  }}>
+                    <PeopleIcon sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="success.main">
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              borderRadius: 3, 
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              height: '100%',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? 1 : 0
+                }}>
+                  <Box sx={{ textAlign: isMobile ? 'center' : 'left' }}>
+                    <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="success.main">
                       {activeUsers}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant={isMobile ? "caption" : "body2"} color="text.secondary">
                       Usuários Ativos
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
-                    <ActiveIcon />
+                  <Avatar sx={{ 
+                    bgcolor: 'success.main', 
+                    width: isMobile ? 32 : 48, 
+                    height: isMobile ? 32 : 48 
+                  }}>
+                    <ActiveIcon sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="warning.main">
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              borderRadius: 3, 
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              height: '100%',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? 1 : 0
+                }}>
+                  <Box sx={{ textAlign: isMobile ? 'center' : 'left' }}>
+                    <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="warning.main">
                       {adminUsers}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant={isMobile ? "caption" : "body2"} color="text.secondary">
                       Administradores
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
-                    <AdminIcon />
+                  <Avatar sx={{ 
+                    bgcolor: 'warning.main', 
+                    width: isMobile ? 32 : 48, 
+                    height: isMobile ? 32 : 48 
+                  }}>
+                    <AdminIcon sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="info.main">
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              borderRadius: 3, 
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              height: '100%',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? 1 : 0
+                }}>
+                  <Box sx={{ textAlign: isMobile ? 'center' : 'left' }}>
+                    <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold" color="info.main">
                       {employeeUsers}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant={isMobile ? "caption" : "body2"} color="text.secondary">
                       Funcionários
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
-                    <WorkIcon />
+                  <Avatar sx={{ 
+                    bgcolor: 'info.main', 
+                    width: isMobile ? 32 : 48, 
+                    height: isMobile ? 32 : 48 
+                  }}>
+                    <WorkIcon sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                   </Avatar>
                 </Box>
               </CardContent>
@@ -225,7 +301,7 @@ const Users: React.FC = () => {
         )}
 
         {/* Filtros */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+        <Paper sx={{ p: isMobile ? 2 : 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <SearchIcon sx={{ mr: 1 }} />
             Filtros de Busca
