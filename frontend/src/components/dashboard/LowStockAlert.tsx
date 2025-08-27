@@ -8,9 +8,11 @@ import {
   ListItemIcon,
   Box,
   Chip,
+  Avatar,
 } from '@mui/material';
 import {
-  Warning,
+  InventoryOutlined,
+  ErrorOutline,
 } from '@mui/icons-material';
 
 interface ProductLowStock {
@@ -35,9 +37,22 @@ const LowStockAlert: React.FC<LowStockAlertProps> = ({ products, loading = false
       height: '100%',
     }}
   >
-    <Typography variant="h6" gutterBottom fontWeight="bold">
-      Produtos com Estoque Baixo
-    </Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Avatar
+        sx={{
+          bgcolor: 'warning.light',
+          color: 'warning.contrastText',
+          mr: 2,
+          width: 32,
+          height: 32,
+        }}
+      >
+        <InventoryOutlined sx={{ fontSize: 18 }} />
+      </Avatar>
+      <Typography variant="h6" fontWeight="bold">
+        Produtos com Estoque Baixo
+      </Typography>
+    </Box>
     
     {loading ? (
       <Box 
@@ -75,7 +90,12 @@ const LowStockAlert: React.FC<LowStockAlertProps> = ({ products, loading = false
             }}
           >
             <ListItemIcon>
-              <Warning color="warning" />
+              <ErrorOutline 
+                sx={{ 
+                  color: 'warning.main',
+                  fontSize: 28
+                }} 
+              />
             </ListItemIcon>
             <ListItemText
               primary={product.nome}

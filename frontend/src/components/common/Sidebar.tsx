@@ -11,14 +11,16 @@ import {
   Typography,
   Divider,
   Avatar,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
-  Dashboard,
-  Inventory,
-  ShoppingCart,
-  People,
-  Store,
-  Person,
+  LocalGroceryStore,
+  AccountCircle,
+  Analytics,
+  Category,
+  PointOfSale,
+  SupervisorAccount,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -40,31 +42,31 @@ interface SidebarProps {
 const menuItems: MenuItem[] = [
   {
     text: 'Dashboard',
-    icon: <Dashboard />,
+    icon: <Analytics />,
     path: '/dashboard',
     roles: ['administrador', 'funcionario'],
   },
   {
     text: 'Produtos',
-    icon: <Inventory />,
+    icon: <Category />,
     path: '/products',
     roles: ['administrador', 'funcionario'],
   },
   {
     text: 'Vendas',
-    icon: <ShoppingCart />,
+    icon: <PointOfSale />,
     path: '/sales',
     roles: ['administrador', 'funcionario'],
   },
   {
     text: 'Usuários',
-    icon: <People />,
+    icon: <SupervisorAccount />,
     path: '/users',
     roles: ['administrador'],
   },
   {
     text: 'Perfil',
-    icon: <Person />,
+    icon: <AccountCircle />,
     path: '/profile',
     roles: ['administrador', 'funcionario'],
   },
@@ -74,6 +76,8 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const filteredMenuItems = menuItems.filter(item =>
     item.roles.includes((user as any)?.role || (user as any)?.papel || 'funcionario')
@@ -81,16 +85,45 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
 
   const drawer = (
     <Box sx={{ height: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-          <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', color: 'white' }}>
-            <Store />
+      <Toolbar sx={{ px: isMobile ? 1 : 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 1 : 2, width: '100%' }}>
+          <Avatar sx={{ 
+            bgcolor: 'rgba(255, 255, 255, 0.15)', 
+            color: 'white',
+            width: isMobile ? 36 : 44,
+            height: isMobile ? 36 : 44,
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            '& svg': {
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+            }
+          }}>
+            <LocalGroceryStore fontSize={isMobile ? 'medium' : 'large'} />
           </Avatar>
           <Box>
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
+                        <Typography 
+              variant={isMobile ? "subtitle1" : "h6"} 
+              component="h1" 
+              sx={{ 
+                color: 'white', 
+                fontWeight: 700,
+                fontSize: isMobile ? '1rem' : '1.25rem',
+                lineHeight: 1.2,
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}
+            >
               Império Água
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
+                fontWeight: 500,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              }}
+            >
               Sistema de Gestão
             </Typography>
           </Box>
@@ -99,26 +132,50 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
 
       <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
 
-      <List sx={{ px: 2, py: 1 }}>
+      <List sx={{ px: isMobile ? 1 : 2, py: 1 }}>
         {filteredMenuItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                navigate(item.path);
+                if (isMobile) {
+                  onDrawerToggle(); // Fechar drawer no mobile após navegar
+                }
+              }}
               selected={location.pathname === item.path}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 color: 'rgba(255, 255, 255, 0.8)',
-                minHeight: 48,
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  color: 'white',
-                  transform: 'translateX(4px)',
+                minHeight: isMobile ? 44 : 48,
+                px: isMobile ? 1.5 : 2,
+                mb: 0.5,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '3px',
+                  bgcolor: 'white',
+                  transform: location.pathname === item.path ? 'scaleY(1)' : 'scaleY(0)',
+                  transition: 'transform 0.3s ease',
                 },
-                '&.Mui-selected': {
+                '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   color: 'white',
+                  transform: 'translateX(6px)',
+                  '& svg': {
+                    transform: 'scale(1.1)',
+                  },
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
                   },
                 },
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -127,7 +184,16 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
               <ListItemIcon
                 sx={{
                   color: 'inherit',
-                  minWidth: 40,
+                  minWidth: 44,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  '& svg': {
+                    fontSize: 24,
+                    filter: location.pathname === item.path 
+                      ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' 
+                      : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                    transition: 'all 0.3s ease',
+                  },
                 }}
               >
                 {item.icon}

@@ -44,6 +44,7 @@ const theme: Theme = createTheme({
       secondary: '#757575',
     },
   },
+
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -107,6 +108,34 @@ const theme: Theme = createTheme({
     borderRadius: 12,
   },
   components: {
+    // Configurações globais para prevenir overflow
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: {
+          overflowX: 'hidden',
+        },
+        body: {
+          overflowX: 'hidden',
+          maxWidth: '100vw',
+        },
+        '*': {
+          boxSizing: 'border-box',
+        },
+        '#root': {
+          overflowX: 'hidden',
+          maxWidth: '100vw',
+        },
+      },
+    },
+    // Configurações para Container
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          maxWidth: '100%',
+          overflowX: 'hidden',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {

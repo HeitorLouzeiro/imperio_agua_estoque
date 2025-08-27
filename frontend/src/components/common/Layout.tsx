@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  const drawerWidth = -100;
+  const drawerWidth = -145;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>

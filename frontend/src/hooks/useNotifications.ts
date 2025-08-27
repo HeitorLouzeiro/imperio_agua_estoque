@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export interface AppNotification {
@@ -24,34 +24,66 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadNotifications = async () => {
+  // Função para obter notificações marcadas como lidas do localStorage
+  const getReadNotifications = (): string[] => {
+    try {
+      const readNotifications = localStorage.getItem('readNotifications');
+      return readNotifications ? JSON.parse(readNotifications) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  // Função para salvar notificação como lida
+  const saveAsRead = (notificationId: string): void => {
+    try {
+      const readNotifications = getReadNotifications();
+      if (!readNotifications.includes(notificationId)) {
+        readNotifications.push(notificationId);
+        localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
+      }
+    } catch (error) {
+      console.error('Erro ao salvar notificação como lida:', error);
+    }
+  };
+
+  // Função para limpar notificações lidas do localStorage (não utilizada atualmente)
+  // const clearReadNotifications = (): void => {
+  //   try {
+  //     localStorage.removeItem('readNotifications');
+  //   } catch (error) {
+  //     console.error('Erro ao limpar notificações lidas:', error);
+  //   }
+  // };
+
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       
       // Carregar produtos em baixo estoque
-      const produtosResponse = await api.get('/api/produtos');
+      const produtosResponse = await api.get('/produtos');
       const produtos = produtosResponse.data;
       
       // Carregar vendas recentes (últimas 24 horas)
-      const vendasResponse = await api.get('/api/vendas');
+      const vendasResponse = await api.get('/vendas');
       const vendas = vendasResponse.data;
       
       const newNotifications: AppNotification[] = [];
       
       // Adicionar notificações de baixo estoque (estoque <= 10)
       produtos
-        .filter((produto: any) => produto.estoque <= 10)
+        .filter((produto: any) => (produto.quantidade || 0) <= 10)
         .forEach((produto: any) => {
           newNotifications.push({
-            id: `low_stock_${produto.id}`,
+            id: `low_stock_${produto._id || produto.id}`,
             type: 'low_stock',
             title: 'Baixo Estoque',
-            message: `${produto.nome} - Restam apenas ${produto.estoque} unidades`,
+            message: `${produto.nome} - Restam apenas ${produto.quantidade || 0} unidades`,
             timestamp: new Date(),
             product: {
-              id: produto.id,
+              id: produto._id || produto.id,
               nome: produto.nome,
-              estoque: produto.estoque
+              estoque: produto.quantidade || 0
             }
           });
         });
@@ -62,22 +94,36 @@ export const useNotifications = () => {
       
       vendas
         .filter((venda: any) => {
-          const vendaDate = new Date(venda.createdAt || venda.data_venda);
-          return vendaDate >= hoje;
+          const vendaDate = new Date(venda.dataVenda || venda.createdAt);
+          return vendaDate >= hoje && venda.status === 'paga';
         })
         .slice(0, 5) // Limitar a 5 vendas mais recentes
         .forEach((venda: any) => {
+          // Extrair nome do primeiro produto da venda
+          let produtoNome = 'Produtos diversos';
+          if (venda.itens && venda.itens.length > 0) {
+            const primeiroItem = venda.itens[0];
+            if (primeiroItem.produto && typeof primeiroItem.produto === 'object') {
+              produtoNome = primeiroItem.produto.nome || 'Produto';
+            }
+            if (venda.itens.length > 1) {
+              produtoNome += ` e mais ${venda.itens.length - 1} item(s)`;
+            }
+          }
+          
+          const totalItens = venda.itens?.reduce((total: number, item: any) => total + (item.quantidade || 0), 0) || 0;
+          
           newNotifications.push({
-            id: `recent_sale_${venda.id}`,
+            id: `recent_sale_${venda._id || venda.id}`,
             type: 'recent_sale',
             title: 'Venda Recente',
-            message: `${venda.produto} - ${venda.quantidade} unidades - R$ ${venda.total?.toFixed(2)}`,
-            timestamp: new Date(venda.createdAt || venda.data_venda),
+            message: `${produtoNome} - ${totalItens} unidades - R$ ${(venda.total || 0).toFixed(2)}`,
+            timestamp: new Date(venda.dataVenda || venda.createdAt),
             sale: {
-              id: venda.id,
-              produto: venda.produto,
-              quantidade: venda.quantidade,
-              total: venda.total
+              id: venda._id || venda.id,
+              produto: produtoNome,
+              quantidade: totalItens,
+              total: venda.total || 0
             }
           });
         });
@@ -85,57 +131,38 @@ export const useNotifications = () => {
       // Ordenar por timestamp (mais recente primeiro)
       newNotifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       
-      setNotifications(newNotifications);
+      // Filtrar notificações já lidas
+      const readNotifications = getReadNotifications();
+      const unreadNotifications = newNotifications.filter(notification => 
+        !readNotifications.includes(notification.id)
+      );
+      
+      setNotifications(unreadNotifications);
       setLoading(false);
       
     } catch (error) {
       console.error('Erro ao carregar notificações:', error);
-      
-      // Notificações de exemplo em caso de erro
-      const exampleNotifications: AppNotification[] = [
-        {
-          id: 'example_1',
-          type: 'low_stock',
-          title: 'Baixo Estoque',
-          message: 'Água 20L - Restam apenas 5 unidades',
-          timestamp: new Date(),
-          product: {
-            id: 1,
-            nome: 'Água 20L',
-            estoque: 5
-          }
-        },
-        {
-          id: 'example_2',
-          type: 'recent_sale',
-          title: 'Venda Recente',
-          message: 'Água 20L - 2 unidades - R$ 20,00',
-          timestamp: new Date(Date.now() - 60000),
-          sale: {
-            id: 1,
-            produto: 'Água 20L',
-            quantidade: 2,
-            total: 20.00
-          }
-        }
-      ];
-      
-      setNotifications(exampleNotifications);
+      setNotifications([]);
       setLoading(false);
     }
-  };
+  }, []);
 
   const getNotificationCount = () => {
     return notifications.length;
   };
 
   const markAsRead = (notificationId: string) => {
+    saveAsRead(notificationId);
     setNotifications(prev => 
       prev.filter(notification => notification.id !== notificationId)
     );
   };
 
   const clearAll = () => {
+    // Marcar todas as notificações atuais como lidas
+    notifications.forEach(notification => {
+      saveAsRead(notification.id);
+    });
     setNotifications([]);
   };
 
@@ -146,7 +173,7 @@ export const useNotifications = () => {
     const interval = setInterval(loadNotifications, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [loadNotifications]);
 
   return {
     notifications,

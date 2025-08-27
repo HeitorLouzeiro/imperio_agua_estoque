@@ -11,22 +11,35 @@ interface ProfileFormData {
   confirmarSenha: string;
 }
 
+interface ValidationState {
+  isCurrentPasswordCorrect: boolean | null; // null = não verificado, true = correta, false = incorreta
+  currentPasswordError: string;
+}
+
 interface UseProfileManagementReturn {
   // States
   loading: boolean;
   formData: ProfileFormData;
   snackbar: SnackbarState;
   showPasswordFields: boolean;
+  validationState: ValidationState;
   
   // Actions
   handleChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleTogglePasswordFields: () => void;
   handleSave: () => Promise<void>;
   handleSnackbarClose: () => void;
+  validateCurrentPassword: () => Promise<void>;
   
   // Utils
   isFormValid: () => boolean;
   showSnackbar: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
+  
+  // Validações específicas
+  isCurrentPasswordValid: () => boolean;
+  isNewPasswordValid: () => boolean;
+  isPasswordConfirmationValid: () => boolean;
+  getPasswordValidationMessage: () => string;
 }
 
 export const useProfileManagement = (): UseProfileManagementReturn => {
@@ -45,6 +58,10 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
     novaSenha: '',
     confirmarSenha: ''
   });
+  const [validationState, setValidationState] = useState<ValidationState>({
+    isCurrentPasswordCorrect: null,
+    currentPasswordError: ''
+  });
 
   // Função para exibir snackbar
   const showSnackbar = useCallback((message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
@@ -62,7 +79,93 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
       ...prev,
       [name]: value
     }));
+    
+    // Reset password validation when current password changes
+    if (name === 'senhaAtual') {
+      setValidationState({
+        isCurrentPasswordCorrect: null,
+        currentPasswordError: ''
+      });
+      
+      // Se o campo foi limpo, resetar validação
+      if (!value.trim()) {
+        setValidationState({
+          isCurrentPasswordCorrect: null,
+          currentPasswordError: ''
+        });
+      }
+    }
   }, []);
+
+  // Validar senha atual via API
+  const validateCurrentPassword = useCallback(async () => {
+    if (!formData.senhaAtual.trim()) {
+      setValidationState({
+        isCurrentPasswordCorrect: null,
+        currentPasswordError: ''
+      });
+      return;
+    }
+
+    // Validação básica de formato da senha
+    if (formData.senhaAtual.length < 3) {
+      setValidationState({
+        isCurrentPasswordCorrect: false,
+        currentPasswordError: 'Senha muito curta'
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const userId = user?.id || user?._id;
+      if (!userId) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Fazer uma tentativa de atualização com apenas a senha atual
+      // Se a senha estiver incorreta, o backend retornará erro
+      await authService.updateProfile(userId as string, {
+        nome: formData.nome,
+        email: formData.email,
+        senhaAtual: formData.senhaAtual
+        // Não enviamos novaSenha para apenas validar a atual
+      });
+
+      // Se chegou até aqui, a senha atual está correta
+      setValidationState({
+        isCurrentPasswordCorrect: true,
+        currentPasswordError: ''
+      });
+
+    } catch (error: any) {
+      const message = error.response?.data?.erro || error.response?.data?.message || '';
+      
+      // Verificar especificamente erro de senha atual incorreta (401)
+      if (error.response?.status === 401 && 
+          (message.includes('Senha atual incorreta') || 
+           message.includes('senha atual') || 
+           message.includes('incorreta'))) {
+        setValidationState({
+          isCurrentPasswordCorrect: false,
+          currentPasswordError: 'Senha atual incorreta'
+        });
+      } else if (error.response?.status === 401) {
+        // Outros erros 401 (token inválido, etc)
+        setValidationState({
+          isCurrentPasswordCorrect: false,
+          currentPasswordError: 'Sessão expirada. Faça login novamente.'
+        });
+      } else {
+        setValidationState({
+          isCurrentPasswordCorrect: false,
+          currentPasswordError: 'Erro ao validar senha'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [formData.senhaAtual, formData.nome, formData.email, user]);
 
   // Alternar exibição dos campos de senha
   const handleTogglePasswordFields = useCallback(() => {
@@ -78,6 +181,43 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
     }
   }, [showPasswordFields]);
 
+  // Validações específicas para senhas
+  const isCurrentPasswordValid = useCallback((): boolean => {
+    if (!showPasswordFields) return true;
+    return formData.senhaAtual.trim().length > 0;
+  }, [formData.senhaAtual, showPasswordFields]);
+
+  const isNewPasswordValid = useCallback((): boolean => {
+    if (!showPasswordFields) return true;
+    return formData.novaSenha.length >= 6;
+  }, [formData.novaSenha, showPasswordFields]);
+
+  const isPasswordConfirmationValid = useCallback((): boolean => {
+    if (!showPasswordFields) return true;
+    return formData.confirmarSenha.length > 0 && formData.novaSenha === formData.confirmarSenha;
+  }, [formData.novaSenha, formData.confirmarSenha, showPasswordFields]);
+
+  const getPasswordValidationMessage = useCallback((): string => {
+    if (!showPasswordFields) return '';
+    
+    if (!isCurrentPasswordValid()) {
+      return 'Digite sua senha atual para confirmar a alteração';
+    }
+    
+    if (!isNewPasswordValid()) {
+      return 'A nova senha deve ter pelo menos 6 caracteres';
+    }
+    
+    if (!isPasswordConfirmationValid()) {
+      if (formData.confirmarSenha.length === 0) {
+        return 'Confirme sua nova senha';
+      }
+      return 'As senhas não coincidem';
+    }
+    
+    return '';
+  }, [isCurrentPasswordValid, isNewPasswordValid, isPasswordConfirmationValid, formData.confirmarSenha, showPasswordFields]);
+
   // Validar formulário
   const isFormValid = useCallback((): boolean => {
     // Validações básicas
@@ -85,7 +225,7 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
       return false;
     }
 
-    // Se está alterando senha, validar campos de senha
+        // Se está alterando senhas, validar campos de senha
     if (showPasswordFields) {
       if (!formData.senhaAtual || !formData.novaSenha || !formData.confirmarSenha) {
         return false;
@@ -95,6 +235,7 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
         return false;
       }
       
+      // Apenas validar se tem pelo menos 6 caracteres
       if (formData.novaSenha.length < 6) {
         return false;
       }
@@ -105,13 +246,31 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
 
   // Salvar alterações
   const handleSave = useCallback(async () => {
-    if (!isFormValid()) {
-      showSnackbar('Por favor, preencha todos os campos obrigatórios', 'error');
-      return;
+    // Validações específicas com mensagens detalhadas
+    if (showPasswordFields) {
+      if (!isCurrentPasswordValid()) {
+        showSnackbar('Digite sua senha atual para confirmar a alteração', 'error');
+        return;
+      }
+      
+      if (!isNewPasswordValid()) {
+        showSnackbar('A nova senha deve ter pelo menos 6 caracteres', 'error');
+        return;
+      }
+      
+      if (!isPasswordConfirmationValid()) {
+        if (formData.confirmarSenha.length === 0) {
+          showSnackbar('Confirme sua nova senha', 'error');
+        } else {
+          showSnackbar('As senhas não coincidem', 'error');
+        }
+        return;
+      }
     }
 
-    if (showPasswordFields && formData.novaSenha !== formData.confirmarSenha) {
-      showSnackbar('As senhas não coincidem', 'error');
+    // Validações básicas do formulário
+    if (!isFormValid()) {
+      showSnackbar('Por favor, preencha todos os campos obrigatórios', 'error');
       return;
     }
 
@@ -141,7 +300,11 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
         updateData
       );
 
-      showSnackbar('Perfil atualizado com sucesso!', 'success');
+      if (showPasswordFields) {
+        showSnackbar('Perfil e senha atualizados com sucesso!', 'success');
+      } else {
+        showSnackbar('Perfil atualizado com sucesso!', 'success');
+      }
       
       // Limpar campos de senha após sucesso
       if (showPasswordFields) {
@@ -157,11 +320,23 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
     } catch (error: any) {
       console.error('Erro ao atualizar perfil:', error);
       const message = error.response?.data?.erro || error.response?.data?.message || 'Erro ao atualizar perfil';
-      showSnackbar(message, 'error');
+      
+      // Tratar erro específico de senha incorreta sem redirecionar
+      if (error.response?.status === 401 && 
+          (message.includes('Senha atual incorreta') || 
+           message.includes('senha atual') || 
+           message.includes('incorreta'))) {
+        showSnackbar('Senha atual incorreta. Verifique e tente novamente.', 'error');
+      } else if (error.response?.status === 401) {
+        // Outros erros 401 (token inválido, etc)
+        showSnackbar('Sessão expirada. Faça login novamente.', 'error');
+      } else {
+        showSnackbar(message, 'error');
+      }
     } finally {
       setLoading(false);
     }
-  }, [formData, showPasswordFields, user, isFormValid, showSnackbar]);
+  }, [formData, showPasswordFields, user, isFormValid, showSnackbar, isCurrentPasswordValid, isNewPasswordValid, isPasswordConfirmationValid]);
 
   // Fechar snackbar
   const handleSnackbarClose = useCallback(() => {
@@ -174,15 +349,23 @@ export const useProfileManagement = (): UseProfileManagementReturn => {
     formData,
     snackbar,
     showPasswordFields,
+    validationState,
     
     // Actions
     handleChange,
     handleTogglePasswordFields,
     handleSave,
     handleSnackbarClose,
+    validateCurrentPassword,
     
     // Utils
     isFormValid,
-    showSnackbar
+    showSnackbar,
+    
+    // Validações específicas
+    isCurrentPasswordValid,
+    isNewPasswordValid,
+    isPasswordConfirmationValid,
+    getPasswordValidationMessage
   };
 };

@@ -27,7 +27,13 @@ const Profile = () => {
     handleTogglePasswordFields,
     handleSave,
     handleSnackbarClose,
-    isFormValid
+    isFormValid,
+    isCurrentPasswordValid,
+    isNewPasswordValid,
+    isPasswordConfirmationValid,
+    getPasswordValidationMessage,
+    validationState,
+    validateCurrentPassword
   } = useProfileManagement();
 
   if (!user) {
@@ -42,31 +48,38 @@ const Profile = () => {
 
   return (
     <Layout>
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-        <ProfileHeader />
-        
-        <ProfileCard user={user} />
-        
-        <PersonalInfoSection 
-          formData={formData}
-          handleChange={handleChange}
-        />
-        
-        <SecuritySection
-          formData={formData}
-          showPasswordFields={showPasswordFields}
-          handleChange={handleChange}
-          handleTogglePasswordFields={handleTogglePasswordFields}
-        />
-        
-        <SecurityNotice />
-        
-        <ProfileActions
-          loading={loading}
-          isFormValid={isFormValid}
-          handleSave={handleSave}
-        />
-
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+          <ProfileHeader />
+          
+          <ProfileCard user={user} />
+          
+          <PersonalInfoSection 
+            formData={formData}
+            handleChange={handleChange}
+          />
+          
+          <SecuritySection
+            formData={formData}
+            showPasswordFields={showPasswordFields}
+            handleChange={handleChange}
+            handleTogglePasswordFields={handleTogglePasswordFields}
+            isCurrentPasswordValid={isCurrentPasswordValid}
+            isNewPasswordValid={isNewPasswordValid}
+            isPasswordConfirmationValid={isPasswordConfirmationValid}
+            getPasswordValidationMessage={getPasswordValidationMessage}
+            validationState={validationState}
+            validateCurrentPassword={validateCurrentPassword}
+          />
+          
+          <SecurityNotice />
+          
+          <ProfileActions
+            loading={loading}
+            isFormValid={isFormValid}
+            handleSave={handleSave}
+          />
+        </Box>
         {/* Snackbar */}
         <Snackbar
           open={snackbar.open}

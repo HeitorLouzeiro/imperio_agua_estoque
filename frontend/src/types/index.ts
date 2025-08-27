@@ -111,6 +111,7 @@ export interface UpdateUserRequest {
   // Campos em português para compatibilidade com backend
   nome?: string;
   senha?: string;
+  senhaAtual?: string;
   papel?: 'administrador' | 'funcionario';
 }
 

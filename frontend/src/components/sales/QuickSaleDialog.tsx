@@ -17,7 +17,10 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction
+  ListItemSecondaryAction,
+  InputAdornment,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -32,6 +35,7 @@ interface QuickSaleDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: (sale: any) => void;
+  onError?: (message: string) => void;
   products: Product[];
   recentClients?: string[];
 }
@@ -40,9 +44,13 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
   open,
   onClose,
   onSuccess,
+  onError,
   products,
   recentClients = []
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [cliente, setCliente] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | ''>('');
@@ -50,9 +58,11 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
   const [formaPagamento, setFormaPagamento] = useState('dinheiro');
   const [desconto, setDesconto] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
+  const [barcode, setBarcode] = useState('');
   
   const clienteRef = useRef<HTMLInputElement>(null);
   const productRef = useRef<HTMLInputElement>(null);
+  const barcodeRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus no cliente quando abrir
   useEffect(() => {
@@ -68,12 +78,60 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
     setSaleItems([]);
     setFormaPagamento('dinheiro');
     setDesconto('');
+    setBarcode('');
+  };
+
+  const handleBarcodeSearch = () => {
+    if (!barcode.trim()) return;
+    
+    const product = products.find(p => p.codigo === barcode.trim());
+    if (product) {
+      setSelectedProduct(product);
+      setQuantity(1);
+      setBarcode('');
+      // Focar no campo de quantidade após encontrar o produto
+      setTimeout(() => {
+        const qtyInput = document.querySelector('input[name="quantity"]') as HTMLInputElement;
+        qtyInput?.focus();
+        qtyInput?.select();
+      }, 100);
+    } else {
+      if (onError) {
+        onError(`❌ Produto não encontrado com código: ${barcode}`);
+      }
+      setBarcode('');
+    }
+  };
+
+  const handleBarcodeKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleBarcodeSearch();
+    }
   };
 
   const handleAddItem = () => {
     const qty = typeof quantity === 'number' ? quantity : parseInt(quantity.toString()) || 0;
     
     if (!selectedProduct || qty <= 0) return;
+
+    // Verificar estoque disponível
+    const estoqueDisponivel = selectedProduct.quantidade || 0;
+    const estoqueJaUsado = saleItems
+      .filter(item => item.produto === selectedProduct.id)
+      .reduce((total, item) => total + item.quantidade, 0);
+    const estoqueRestante = estoqueDisponivel - estoqueJaUsado;
+
+    if (qty > estoqueRestante) {
+      if (onError) {
+        if (estoqueRestante === 0) {
+          onError(`❌ ${selectedProduct.nome} - Sem estoque disponível`);
+        } else {
+          onError(`❌ ${selectedProduct.nome} - Estoque insuficiente. Disponível: ${estoqueRestante}, solicitado: ${qty}`);
+        }
+      }
+      return;
+    }
 
     const existingIndex = saleItems.findIndex(item => 
       item.produto === selectedProduct.id
@@ -111,7 +169,7 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
     // Reset para próximo produto
     setSelectedProduct(null);
     setQuantity('');
-    setTimeout(() => productRef.current?.focus(), 100);
+    setTimeout(() => barcodeRef.current?.focus(), 100); // Focar no código de barras para agilizar
   };
 
   const handleRemoveItem = (index: number) => {
@@ -129,6 +187,31 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
     if (newQty <= 0) {
       handleRemoveItem(index);
       return;
+    }
+
+    const item = saleItems[index];
+    // Encontrar o produto correspondente para verificar estoque
+    const product = products.find(p => p.id === item.produto || p._id === item.produto);
+    
+    if (product) {
+      // Calcular estoque total já usado por outros itens do mesmo produto
+      const outrosItens = saleItems.filter((saleItem, i) => 
+        i !== index && (saleItem.produto === product.id || saleItem.produto === product._id)
+      );
+      const estoqueUsadoOutros = outrosItens.reduce((total, saleItem) => total + saleItem.quantidade, 0);
+      const estoqueDisponivel = (product.quantidade || 0) - estoqueUsadoOutros;
+
+      // Verificar se a nova quantidade não excede o estoque disponível
+      if (newQty > estoqueDisponivel) {
+        if (onError) {
+          if (estoqueDisponivel === 0) {
+            onError(`❌ ${product.nome} - Sem estoque disponível`);
+          } else {
+            onError(`❌ ${product.nome} - Estoque insuficiente. Disponível: ${estoqueDisponivel}, solicitado: ${newQty}`);
+          }
+        }
+        return;
+      }
     }
     
     setSaleItems(prev => prev.map((item, i) =>
@@ -197,8 +280,33 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
       
       handleReset();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar venda:', error);
+      
+      // Tratamento específico para erro de estoque
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.erro || error.response?.data?.message;
+        
+        if (errorMessage?.includes('Estoque insuficiente')) {
+          // Extrair informações do erro para mostrar ao usuário
+          if (onError) {
+            onError(`⚠️ ${errorMessage}`);
+          }
+        } else if (errorMessage?.includes('não encontrado')) {
+          if (onError) {
+            onError('❌ Produto não encontrado ou inativo');
+          }
+        } else {
+          if (onError) {
+            onError(`❌ ${errorMessage || 'Erro ao processar venda'}`);
+          }
+        }
+      } else {
+        if (onError) {
+          onError('❌ Erro interno do servidor. Tente novamente.');
+        }
+      }
+      
       throw error;
     } finally {
       setLoading(false);
@@ -228,28 +336,40 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
     <Dialog 
       open={open} 
       onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
+      maxWidth={isMobile ? false : "sm"}
+      fullWidth={!isMobile}
+      fullScreen={isMobile}
       PaperProps={{
-        sx: { minHeight: '70vh' }
+        sx: { 
+          ...(isMobile ? {
+            margin: 0,
+            width: '100%',
+            height: '100%',
+            maxHeight: '100%',
+            borderRadius: 0
+          } : {
+            minHeight: '70vh',
+            maxHeight: '90vh'
+          })
+        }
       }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ pb: isMobile ? 1 : 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box display="flex" alignItems="center" gap={2}>
-            <CartIcon color="primary" />
-            <Typography variant="h6" fontWeight="bold">
+          <Box display="flex" alignItems="center" gap={isMobile ? 1 : 2}>
+            <CartIcon color="primary" fontSize={isMobile ? "medium" : "large"} />
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
               Venda Rápida
             </Typography>
           </Box>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size={isMobile ? "medium" : "large"}>
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
 
-      <DialogContent>
-        <Grid container spacing={2}>
+      <DialogContent sx={{ px: isMobile ? 2 : 3 }}>
+        <Grid container spacing={isMobile ? 1.5 : 2}>
           {/* Cliente */}
           <Grid item xs={12}>
             <Autocomplete
@@ -279,6 +399,7 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
               label="Forma de Pagamento"
               value={formaPagamento}
               onChange={(e) => setFormaPagamento(e.target.value)}
+              size={isMobile ? "small" : "medium"}
             >
               <MenuItem value="dinheiro">💵 Dinheiro</MenuItem>
               <MenuItem value="cartao_debito">💳 Cartão Débito</MenuItem>
@@ -296,6 +417,7 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
               label="Desconto (R$)"
               value={desconto}
               disabled={saleItems.length === 0}
+              size={isMobile ? "small" : "medium"}
               onChange={(e) => {
                 const value = parseFloat(e.target.value);
                 const subtotal = saleItems.reduce((total, item) => total + item.subtotal, 0);
@@ -325,6 +447,33 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
             />
           </Grid>
 
+          {/* Código de Barras */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="🔍 Código de Barras"
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              onKeyPress={handleBarcodeKeyPress}
+              placeholder="Escaneie ou digite o código de barras..."
+              ref={barcodeRef}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton 
+                      onClick={handleBarcodeSearch}
+                      disabled={!barcode.trim()}
+                      size="small"
+                    >
+                      🔍
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+              sx={{ mb: 1 }}
+            />
+          </Grid>
+
           {/* Adicionar Produto */}
           <Grid item xs={7}>
             <Autocomplete
@@ -337,24 +486,37 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
               renderInput={(params) => (
                 <TextField 
                   {...params} 
-                  label="Produto" 
+                  label="Produto (ou use código de barras acima)" 
                   fullWidth 
                   ref={productRef}
                   onKeyPress={handleKeyPress}
                 />
               )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props}>
-                  <Box>
-                    <Typography variant="body1" fontWeight="bold">
-                      {option.nome}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {option.codigo && `Código: ${option.codigo} | `}R$ {option.preco?.toFixed(2) || '0.00'}
-                    </Typography>
+              renderOption={(props, option) => {
+                const estoqueUsado = saleItems
+                  .filter(item => item.produto === option.id)
+                  .reduce((total, item) => total + item.quantidade, 0);
+                const estoqueDisponivel = (option.quantidade || 0) - estoqueUsado;
+                const temEstoque = estoqueDisponivel > 0;
+
+                return (
+                  <Box component="li" {...props} sx={{ 
+                    opacity: temEstoque ? 1 : 0.5,
+                    background: !temEstoque ? '#ffebee' : 'inherit'
+                  }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body1" fontWeight="bold">
+                        {option.nome} {!temEstoque && '(SEM ESTOQUE)'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {option.codigo && `Código: ${option.codigo} | `}
+                        R$ {option.preco?.toFixed(2) || '0.00'} | 
+                        Estoque: {estoqueDisponivel}/{option.quantidade || 0}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              )}
+                );
+              }}
               isOptionEqualToValue={(option, value) => 
                 (option.id || option._id) === (value.id || value._id)
               }
@@ -398,54 +560,72 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
                     Produtos ({saleItems.length})
                   </Typography>
                   <List dense>
-                    {saleItems.map((item, index) => (
-                      <ListItem key={index} divider={index < saleItems.length - 1}>
-                        <ListItemText
-                          primary={
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                              <Typography variant="body2" fontWeight="bold">
-                                {item.nome}
-                              </Typography>
-                              <Typography variant="body2" color="success.main" fontWeight="bold">
-                                R$ {item.subtotal.toFixed(2)}
-                              </Typography>
-                            </Box>
-                          }
-                          secondary={
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleQuantityChange(index, item.quantidade - 1)}
-                              >
-                                <RemoveIcon fontSize="small" />
-                              </IconButton>
-                              <Typography variant="body2">
-                                {item.quantidade}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleQuantityChange(index, item.quantidade + 1)}
-                              >
-                                <AddIcon fontSize="small" />
-                              </IconButton>
-                              <Typography variant="body2" color="text.secondary">
-                                × R$ {item.precoUnitario.toFixed(2)}
-                              </Typography>
-                            </Box>
-                          }
-                        />
-                        <ListItemSecondaryAction>
-                          <IconButton 
-                            edge="end" 
-                            onClick={() => handleRemoveItem(index)}
-                            size="small"
-                            color="error"
-                          >
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    ))}
+                    {saleItems.map((item, index) => {
+                      // Calcular estoque disponível para este produto
+                      const product = products.find(p => p.id === item.produto || p._id === item.produto);
+                      const outrosItens = saleItems.filter((saleItem, i) => 
+                        i !== index && (saleItem.produto === product?.id || saleItem.produto === product?._id)
+                      );
+                      const estoqueUsadoOutros = outrosItens.reduce((total, saleItem) => total + saleItem.quantidade, 0);
+                      const estoqueDisponivel = (product?.quantidade || 0) - estoqueUsadoOutros;
+                      const podeAumentar = item.quantidade < estoqueDisponivel;
+
+                      return (
+                        <ListItem key={index} divider={index < saleItems.length - 1}>
+                          <ListItemText
+                            primary={
+                              <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <Typography variant="body2" fontWeight="bold">
+                                  {item.nome}
+                                </Typography>
+                                <Typography variant="body2" color="success.main" fontWeight="bold">
+                                  R$ {item.subtotal.toFixed(2)}
+                                </Typography>
+                              </Box>
+                            }
+                            secondary={
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleQuantityChange(index, item.quantidade - 1)}
+                                >
+                                  <RemoveIcon fontSize="small" />
+                                </IconButton>
+                                <Typography variant="body2">
+                                  {item.quantidade}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleQuantityChange(index, item.quantidade + 1)}
+                                  disabled={!podeAumentar}
+                                  title={!podeAumentar ? 'Estoque insuficiente' : 'Aumentar quantidade'}
+                                >
+                                  <AddIcon fontSize="small" />
+                                </IconButton>
+                                <Typography variant="body2" color="text.secondary">
+                                  × R$ {item.precoUnitario.toFixed(2)}
+                                </Typography>
+                                {!podeAumentar && (
+                                  <Typography variant="caption" color="warning.main" sx={{ ml: 1 }}>
+                                    (Estoque máx.)
+                                  </Typography>
+                                )}
+                              </Box>
+                            }
+                          />
+                          <ListItemSecondaryAction>
+                            <IconButton 
+                              edge="end" 
+                              onClick={() => handleRemoveItem(index)}
+                              size="small"
+                              color="error"
+                            >
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      );
+                    })}
                   </List>
                 </CardContent>
               </Card>
@@ -492,8 +672,17 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
         </Grid>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions sx={{ 
+        p: isMobile ? 1 : 2,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 1 : 0
+      }}>
+        <Button 
+          onClick={onClose} 
+          disabled={loading}
+          fullWidth={isMobile}
+          size={isMobile ? "large" : "medium"}
+        >
           Cancelar
         </Button>
         <Button
@@ -501,7 +690,11 @@ const QuickSaleDialog: React.FC<QuickSaleDialogProps> = ({
           onClick={handleSubmit}
           disabled={!cliente.trim() || saleItems.length === 0 || loading}
           size="large"
-          sx={{ minWidth: 120 }}
+          fullWidth={isMobile}
+          sx={{ 
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '1rem' : '0.875rem'
+          }}
         >
           {loading ? 'Finalizando...' : `Finalizar - R$ ${calculateTotal().toFixed(2)}`}
         </Button>

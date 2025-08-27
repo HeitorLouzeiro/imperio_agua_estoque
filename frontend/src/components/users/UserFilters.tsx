@@ -1,17 +1,25 @@
 import React from 'react';
 import {
-  Paper,
-  Typography,
   Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
-  InputAdornment
+  InputAdornment,
+  MenuItem,
+  Box,
+  Chip,
+  Typography,
+  IconButton,
+  Tooltip,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
-import { GridSearchIcon } from '@mui/x-data-grid';
+import {
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  Clear as ClearIcon,
+  Group as GroupIcon,
+  ToggleOn as StatusIcon
+} from '@mui/icons-material';
 
 interface UserFiltersProps {
   searchTerm: string;
@@ -21,6 +29,7 @@ interface UserFiltersProps {
   statusFilter: string;
   setStatusFilter: (value: string) => void;
   onClearFilters: () => void;
+  onRefresh?: () => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
@@ -30,71 +39,219 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   setRoleFilter,
   statusFilter,
   setStatusFilter,
-  onClearFilters
+  onClearFilters,
+  onRefresh
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  const clearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('');
+    setStatusFilter('todos');
+    onClearFilters();
+  };
+
+  const hasActiveFilters = searchTerm || roleFilter || statusFilter !== 'todos';
+
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
-      <Typography variant="h6" fontWeight="bold" gutterBottom>
-        Filtros de Pesquisa
-      </Typography>
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={4}>
+    <Box>
+      <Grid container spacing={isMobile ? 1.5 : 2} alignItems="flex-end">
+        <Grid item xs={12} sm={12} md={4}>
           <TextField
-            label="Pesquisar"
-            placeholder="Nome ou email do usuário..."
             fullWidth
+            placeholder="Buscar por nome ou email"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            variant="outlined"
+            size={isMobile ? "small" : "medium"}
+            sx={{ 
+              '& .MuiOutlinedInput-root': { 
+                borderRadius: 2,
+                backgroundColor: 'background.paper',
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              }
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <GridSearchIcon />
+                  <SearchIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
                 </InputAdornment>
               ),
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchTerm('')}>
+                    <ClearIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />
+                  </IconButton>
+                </InputAdornment>
+              )
             }}
-            sx={{ borderRadius: 2 }}
           />
         </Grid>
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <InputLabel>Filtrar por papel</InputLabel>
-            <Select
-              value={roleFilter}
-              label="Filtrar por papel"
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="administrador">Administrador</MenuItem>
-              <MenuItem value="funcionario">Funcionário</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={statusFilter}
-              label="Status"
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="todos">Todos</MenuItem>
-              <MenuItem value="ativo">Apenas Ativos</MenuItem>
-              <MenuItem value="inativo">Apenas Inativos</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} md={2}>
-          <Button
-            variant="outlined"
+
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
             fullWidth
-            onClick={onClearFilters}
-            sx={{ height: '56px', borderRadius: 2 }}
+            select
+            label="Papel"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            variant="outlined"
+            size={isMobile ? "small" : "medium"}
+            sx={{ 
+              '& .MuiOutlinedInput-root': { 
+                borderRadius: 2,
+                backgroundColor: 'background.paper'
+              },
+              '& .MuiInputLabel-root': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <GroupIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
+                </InputAdornment>
+              )
+            }}
           >
-            Limpar
-          </Button>
+            <MenuItem value="">Todos os papéis</MenuItem>
+            <MenuItem value="administrador">Administrador</MenuItem>
+            <MenuItem value="funcionario">Funcionário</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            select
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            variant="outlined"
+            size={isMobile ? "small" : "medium"}
+            sx={{ 
+              '& .MuiOutlinedInput-root': { 
+                borderRadius: 2,
+                backgroundColor: 'background.paper'
+              },
+              '& .MuiInputLabel-root': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              },
+              '& .MuiInputBase-input': {
+                fontSize: isMobile ? '0.875rem' : '1rem'
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <StatusIcon color="action" sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />
+                </InputAdornment>
+              )
+            }}
+          >
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="ativo">Ativos</MenuItem>
+            <MenuItem value="inativo">Inativos</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} md={2}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            flexDirection: isMobile ? 'row' : 'column',
+            justifyContent: isMobile ? 'space-between' : 'flex-start'
+          }}>
+            <Tooltip title="Atualizar lista">
+              <Button
+                fullWidth={!isMobile}
+                variant="outlined"
+                onClick={onRefresh || (() => window.location.reload())}
+                startIcon={!isMobile ? <RefreshIcon /> : undefined}
+                size={isMobile ? "small" : "medium"}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 'medium',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  minWidth: isMobile ? '80px' : 'auto',
+                  flex: isMobile ? 1 : 'none'
+                }}
+              >
+                {isMobile ? 'Atualizar' : 'Atualizar'}
+              </Button>
+            </Tooltip>
+            
+            {hasActiveFilters && (
+              <Tooltip title="Limpar filtros">
+                <Button
+                  fullWidth={!isMobile}
+                  variant="text"
+                  onClick={clearFilters}
+                  startIcon={!isMobile ? <ClearIcon /> : undefined}
+                  size="small"
+                  sx={{ 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    minWidth: isMobile ? '70px' : 'auto',
+                    flex: isMobile ? 1 : 'none'
+                  }}
+                >
+                  Limpar
+                </Button>
+              </Tooltip>
+            )}
+          </Box>
         </Grid>
       </Grid>
-    </Paper>
+
+      {/* Filtros ativos */}
+      {hasActiveFilters && (
+        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
+            Filtros ativos:
+          </Typography>
+          {searchTerm && (
+            <Chip
+              label={`Busca: "${searchTerm}"`}
+              onDelete={() => setSearchTerm('')}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
+            />
+          )}
+          {roleFilter && (
+            <Chip
+              label={`Papel: ${roleFilter}`}
+              onDelete={() => setRoleFilter('')}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
+            />
+          )}
+          {statusFilter !== 'todos' && (
+            <Chip
+              label={`Status: ${statusFilter}`}
+              onDelete={() => setStatusFilter('todos')}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}
+            />
+          )}
+        </Box>
+      )}
+    </Box>
   );
 };
 
