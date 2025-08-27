@@ -16,6 +16,8 @@ import {
   ToggleOn,
   ToggleOff
 } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import UserActionsModal from './UserActionsModal';
 import { User } from '../../types';
 
 interface UserTableProps {
@@ -34,8 +36,21 @@ const UserTable: React.FC<UserTableProps> = ({
   onToggleStatus
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+
+  // Estado para modal de ações no mobile
+  const [actionModalOpen, setActionModalOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+
+  const handleOpenActionModal = (user: User) => {
+    setSelectedUser(user);
+    setActionModalOpen(true);
+  };
+  const handleCloseActionModal = () => {
+    setActionModalOpen(false);
+    setSelectedUser(null);
+  };
 
   const columns: GridColDef[] = [
     { 
@@ -130,88 +145,111 @@ const UserTable: React.FC<UserTableProps> = ({
     {
       field: 'actions',
       headerName: 'Ações',
-      width: isMobile ? 70 : isTablet ? 100 : 160,
-      minWidth: 70,
+      width: isMobile ? 80 : isTablet ? 100 : 130,
+      minWidth: 80,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', gap: isMobile ? 0.25 : 0.5 }}>
-          <Tooltip title="Editar Usuário">
-            <IconButton size={isMobile ? "small" : "small"} onClick={() => onEdit(params.row)}>
-              <Edit sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />
+        isMobile ? (
+          <Tooltip title="Ações">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleOpenActionModal(params.row as User)}
+              sx={{ p: 0.5 }}
+            >
+              <MoreVertIcon sx={{ fontSize: '1.2rem' }} />
             </IconButton>
           </Tooltip>
-          {onToggleStatus && !isMobile && (
-            <Tooltip title={params.row.ativo !== false ? 'Desativar' : 'Reativar'}>
-              <IconButton 
-                size="small" 
-                color={params.row.ativo !== false ? 'success' : 'error'}
-                onClick={() => {
-                  const action = params.row.ativo !== false ? 'desativar' : 'reativar';
-                  const message = `Tem certeza que deseja ${action} o usuário "${params.row.nome}"?`;
-                  if (window.confirm(message)) {
-                    onToggleStatus(params.row.id);
-                  }
-                }}
-              >
-                {params.row.ativo !== false ? <ToggleOn /> : <ToggleOff />}
+        ) : (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title="Editar">
+              <IconButton size="small" onClick={() => onEdit(params.row as User)}>
+                <Edit sx={{ fontSize: '1.2rem' }} />
               </IconButton>
             </Tooltip>
-          )}
-        </Box>
+            {onToggleStatus && (
+              <Tooltip title={params.row.ativo !== false ? 'Desativar' : 'Reativar'}>
+                <IconButton 
+                  size="small" 
+                  color={params.row.ativo !== false ? 'success' : 'error'}
+                  onClick={() => {
+                    const action = params.row.ativo !== false ? 'desativar' : 'reativar';
+                    const message = `Tem certeza que deseja ${action} o usuário "${params.row.nome}"?`;
+                    if (window.confirm(message)) {
+                      onToggleStatus(params.row.id);
+                    }
+                  }}
+                >
+                  {params.row.ativo !== false ? <ToggleOn /> : <ToggleOff />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )
       ),
     },
   ];
 
   return (
-    <Paper sx={{ height: isMobile ? 350 : isTablet ? 450 : 500, width: '100%' }}>
-      <DataGrid
-        sx={{
-          borderRadius: 0,
-          '& .MuiDataGrid-columnHeader': {
-            fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
-            fontWeight: 'bold'
-          },
-          '& .MuiDataGrid-cell': {
-            fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
-            padding: isMobile ? '4px 8px' : '8px 12px'
-          },
-          '& .MuiDataGrid-row': {
-            minHeight: isMobile ? '40px !important' : '52px !important'
-          },
-          '& .MuiDataGrid-columnSeparator': {
-            display: isMobile ? 'none' : 'block'
-          },
-          '& .MuiDataGrid-toolbarContainer': {
-            padding: isMobile ? '8px' : '16px'
-          }
-        }}
-        rows={users}
-        columns={columns}
-        loading={loading}
-        pageSizeOptions={isMobile ? [5, 10] : isTablet ? [10, 25] : [10, 25, 50]}
-        initialState={{ 
-          pagination: { 
-            paginationModel: { 
-              pageSize: isMobile ? 5 : isTablet ? 10 : 10 
+    <>
+      <Paper sx={{ height: isMobile ? 350 : isTablet ? 450 : 500, width: '100%' }}>
+        <DataGrid
+          sx={{
+            borderRadius: 0,
+            '& .MuiDataGrid-columnHeader': {
+              fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
+              fontWeight: 'bold'
+            },
+            '& .MuiDataGrid-cell': {
+              fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
+              padding: isMobile ? '4px 8px' : '8px 12px'
+            },
+            '& .MuiDataGrid-row': {
+              minHeight: isMobile ? '40px !important' : '52px !important'
+            },
+            '& .MuiDataGrid-columnSeparator': {
+              display: isMobile ? 'none' : 'block'
+            },
+            '& .MuiDataGrid-toolbarContainer': {
+              padding: isMobile ? '8px' : '16px'
+            }
+          }}
+          rows={users}
+          columns={columns}
+          loading={loading}
+          pageSizeOptions={isMobile ? [5, 10] : isTablet ? [10, 25] : [10, 25, 50]}
+          initialState={{ 
+            pagination: { 
+              paginationModel: { 
+                pageSize: isMobile ? 5 : isTablet ? 10 : 10 
+              } 
             } 
-          } 
-        }}
-        disableRowSelectionOnClick
-        getRowId={(row) => row.id}
-        density={isMobile ? 'compact' : 'standard'}
-        localeText={{
-          noRowsLabel: 'Nenhum usuário encontrado',
-          footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
-          MuiTablePagination: {
-            labelRowsPerPage: isMobile ? 'Por página:' : 'Linhas por página:',
-            labelDisplayedRows: ({ from, to, count }) => 
-              isMobile 
-                ? `${from}-${to} de ${count !== -1 ? count : `+${to}`}`
-                : `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
-          },
-        }}
+          }}
+          disableRowSelectionOnClick
+          getRowId={(row) => row.id}
+          density={isMobile ? 'compact' : 'standard'}
+          localeText={{
+            noRowsLabel: 'Nenhum usuário encontrado',
+            footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
+            MuiTablePagination: {
+              labelRowsPerPage: isMobile ? 'Por página:' : 'Linhas por página:',
+              labelDisplayedRows: ({ from, to, count }) => 
+                isMobile 
+                  ? `${from}-${to} de ${count !== -1 ? count : `+${to}`}`
+                  : `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+            },
+          }}
+        />
+      </Paper>
+      {/* Modal de ações para mobile */}
+      <UserActionsModal
+        open={actionModalOpen}
+        onClose={handleCloseActionModal}
+        user={selectedUser}
+        onEdit={onEdit}
+        onToggleStatus={onToggleStatus}
       />
-    </Paper>
+    </>
   );
 };
 

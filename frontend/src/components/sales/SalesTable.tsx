@@ -1,13 +1,14 @@
-import React from 'react';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip, useTheme, useMediaQuery } from '@mui/material';
-import { 
-  Visibility as ViewIcon, 
+import {
   EditNote as EditNoteIcon,
   Assignment as StatusIcon,
-  Print as PrintIcon 
+  Visibility as ViewIcon
 } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { Box, Chip, IconButton, Tooltip, useMediaQuery, useTheme } from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import React from 'react';
 import { Sale } from '../../types';
+import SaleActionsModal from './SaleActionsModal';
 
 interface SalesTableProps {
   sales: Sale[];
@@ -29,7 +30,20 @@ const SalesTable: React.FC<SalesTableProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
-  
+
+  // Estado para modal de ações no mobile
+  const [actionModalOpen, setActionModalOpen] = React.useState(false);
+  const [selectedSale, setSelectedSale] = React.useState<Sale | null>(null);
+
+  const handleOpenActionModal = (sale: Sale) => {
+    setSelectedSale(sale);
+    setActionModalOpen(true);
+  };
+  const handleCloseActionModal = () => {
+    setActionModalOpen(false);
+    setSelectedSale(null);
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'numero',
@@ -137,49 +151,49 @@ const SalesTable: React.FC<SalesTableProps> = ({
       sortable: false,
       filterable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', gap: isMobile ? 0 : 0.5 }}>
-          <Tooltip title="Visualizar">
-            <IconButton 
-              size="small" 
-              onClick={() => onViewSale(params.row)}
+        isMobile ? (
+          <Tooltip title="Ações">
+            <IconButton
+              size="small"
               color="primary"
-              sx={{ p: isMobile ? 0.5 : 1 }}
+              onClick={() => handleOpenActionModal(params.row)}
+              sx={{ p: 0.5 }}
             >
-              <ViewIcon sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }} />
+              <MoreVertIcon sx={{ fontSize: '1.2rem' }} />
             </IconButton>
           </Tooltip>
-          {!isMobile && (
-            <>
-              <Tooltip title="Editar Venda">
-                <IconButton 
-                  size="small" 
-                  onClick={() => onEditSale(params.row)}
-                  color="warning"
-                >
-                  <EditNoteIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Editar Status">
-                <IconButton 
-                  size="small" 
-                  onClick={() => onEditStatus(params.row)}
-                  color="secondary"
-                >
-                  <StatusIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Imprimir">
-                <IconButton 
-                  size="small" 
-                  onClick={() => onPrintSale(params.row)}
-                  color="info"
-                >
-                  <PrintIcon />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Box>
+        ) : (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title="Visualizar">
+              <IconButton 
+                size="small" 
+                onClick={() => onViewSale(params.row)}
+                color="primary"
+                sx={{ p: 1 }}
+              >
+                <ViewIcon sx={{ fontSize: '1.25rem' }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar Venda">
+              <IconButton 
+                size="small" 
+                onClick={() => onEditSale(params.row)}
+                color="warning"
+              >
+                <EditNoteIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar Status">
+              <IconButton 
+                size="small" 
+                onClick={() => onEditStatus(params.row)}
+                color="secondary"
+              >
+                <StatusIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )
       ),
     },
   ];
@@ -258,6 +272,16 @@ const SalesTable: React.FC<SalesTableProps> = ({
         }}
         density={isMobile ? 'standard' : 'standard'}
         rowHeight={isMobile ? 45 : 56}
+      />
+      {/* Modal de ações para mobile */}
+      <SaleActionsModal
+        open={actionModalOpen}
+        onClose={handleCloseActionModal}
+        sale={selectedSale}
+        onView={onViewSale}
+        onEdit={onEditSale}
+        onEditStatus={onEditStatus}
+        onPrint={onPrintSale}
       />
     </Box>
   );
