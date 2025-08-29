@@ -27,8 +27,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         sx={{
           flexGrow: 1,
           p: { xs: 2, sm: 3 },
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          width: { lg: `calc(100% - ${drawerWidth}px)` }, // Só aplica margem em desktop (lg+)
+          ml: { lg: `${drawerWidth}px` }, // Só aplica margem em desktop (lg+)
           minHeight: '100vh',
           backgroundColor: '#f5f7fa',
           position: 'relative',

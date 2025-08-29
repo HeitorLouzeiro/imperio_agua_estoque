@@ -76,17 +76,29 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
       setCustomerName(sale.cliente || '');
       setPaymentMethod(sale.formaPagamento || '');
       setStatus(sale.status || 'pendente');
-      setNotes(sale.notes || '');
+      setNotes(sale.observacoes || '');
       
       // Converter itens da venda para o formato do formulário
       if (sale.itens && Array.isArray(sale.itens)) {
         const convertedItems: SaleItem[] = sale.itens.map((item: any, index: number) => {
-          const product = products.find(p => p.id === item.productId || p._id === item.productId) || {
-            id: item.productId || `unknown-${index}`,
-            name: item.productName || 'Produto não encontrado',
-            nome: item.productName || 'Produto não encontrado',
-            price: item.unitPrice || 0,
-            preco: item.unitPrice || 0,
+          // Buscar produto usando o ID correto (pode ser item.produto.id, item.produto._id ou item.produto)
+          let productId = item.produto;
+          if (typeof item.produto === 'object' && item.produto !== null) {
+            productId = item.produto._id || item.produto.id;
+          }
+          
+          const product = products.find(p => 
+            p.id === productId || 
+            p._id === productId ||
+            p.id === item.produto ||
+            p._id === item.produto
+          ) || {
+            id: productId || `unknown-${index}`,
+            _id: productId || `unknown-${index}`,
+            name: item.nome || item.product?.nome || 'Produto não encontrado',
+            nome: item.nome || item.product?.nome || 'Produto não encontrado',
+            price: item.precoUnitario || 0,
+            preco: item.precoUnitario || 0,
             quantity: 0,
             quantidade: 0,
             createdAt: '',
@@ -94,11 +106,11 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
           };
           
           return {
-            id: `${item.productId}-${index}`,
+            id: `${productId}-${index}`,
             product,
-            quantity: item.quantity || 1,
-            unitPrice: item.unitPrice || 0,
-            totalPrice: (item.quantity || 1) * (item.unitPrice || 0),
+            quantity: item.quantidade || 1,
+            unitPrice: item.precoUnitario || 0,
+            totalPrice: item.subtotal || ((item.quantidade || 1) * (item.precoUnitario || 0)),
           };
         });
         setItems(convertedItems);
@@ -214,15 +226,14 @@ const SaleEditDialog: React.FC<SaleEditDialogProps> = ({
         cliente: customerName,
         formaPagamento: paymentMethod,
         status,
-        notes,
+        observacoes: notes,
+        desconto: 0, // Adicionar suporte a desconto se necessário
         itens: items.map(item => ({
-          productId: item.product.id || item.product._id,
-          productName: item.product.nome || item.product.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
+          produto: item.product.id || item.product._id,
+          quantidade: item.quantity,
+          precoUnitario: item.unitPrice,
+          subtotal: item.totalPrice,
         })),
-        valorTotal: totalAmount,
       };
 
       await onSave(saleData);

@@ -148,14 +148,21 @@ export const useNotifications = () => {
   }, []);
 
   const getNotificationCount = () => {
-    return notifications.length;
+    const readNotifications = getReadNotifications();
+    return notifications.filter(notification => 
+      !readNotifications.includes(notification.id)
+    ).length;
   };
 
   const markAsRead = (notificationId: string) => {
     saveAsRead(notificationId);
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== notificationId)
-    );
+    // Não remove a notificação, apenas marca como lida no localStorage
+    // As notificações permanecem visíveis mas com aparência diferente
+  };
+
+  const dismissNotification = (notificationId: string) => {
+    // Remove a notificação da lista visual
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
   const clearAll = () => {
@@ -180,6 +187,7 @@ export const useNotifications = () => {
     loading,
     getNotificationCount,
     markAsRead,
+    dismissNotification,
     clearAll,
     refresh: loadNotifications
   };

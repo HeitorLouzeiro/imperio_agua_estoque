@@ -142,13 +142,17 @@ export interface CreateSaleRequest {
 }
 
 export interface UpdateSaleRequest {
-  productId?: number;
-  quantity?: number;
-  unitPrice?: number;
-  customerName?: string;
-  customerPhone?: string;
-  customerAddress?: string;
-  notes?: string;
+  cliente?: string;
+  itens?: Array<{
+    produto: string | number;
+    quantidade: number;
+    precoUnitario?: number;
+    subtotal?: number;
+  }>;
+  formaPagamento?: string;
+  desconto?: number;
+  observacoes?: string;
+  status?: 'pendente' | 'paga' | 'cancelada';
 }
 
 export interface DashboardStats {

@@ -337,16 +337,40 @@ const Products: React.FC = () => {
           product={viewProduct}
         />
 
-        {/* Snackbar */}
+        {/* Snackbar Animado */}
         <Snackbar
           open={snackbar.open}
-          autoHideDuration={4000}
+          autoHideDuration={5000}
           onClose={closeSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{
+            mt: 8,
+            '& .MuiAlert-root': {
+              minWidth: '300px',
+              maxWidth: '400px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              animation: snackbar.open ? 'slideInRight 0.4s ease-out' : 'none',
+            }
+          }}
         >
           <Alert
             severity={snackbar.severity}
             onClose={closeSnackbar}
-            sx={{ width: '100%' }}
+            sx={{ 
+              width: '100%',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              '& .MuiAlert-message': {
+                paddingTop: '4px',
+                paddingBottom: '4px'
+              },
+              '& .MuiAlert-icon': {
+                fontSize: '1.2rem'
+              }
+            }}
           >
             {snackbar.message}
           </Alert>
