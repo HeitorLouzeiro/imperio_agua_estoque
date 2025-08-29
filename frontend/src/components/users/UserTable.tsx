@@ -1,24 +1,24 @@
-import React from 'react';
 import {
-  Paper,
-  Box,
-  Typography,
-  IconButton,
-  Chip,
-  Tooltip,
-  useTheme,
-  useMediaQuery
-} from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { 
-  Edit, 
+  Edit,
   Person as PersonIcon,
-  ToggleOn,
-  ToggleOff
+  ToggleOff,
+  ToggleOn
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import UserActionsModal from './UserActionsModal';
+import {
+  Box,
+  Chip,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import React from 'react';
 import { User } from '../../types';
+import UserActionsModal from './UserActionsModal';
 
 interface UserTableProps {
   users: User[];
@@ -36,8 +36,7 @@ const UserTable: React.FC<UserTableProps> = ({
   onToggleStatus
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+  const isTabletMobile = useMediaQuery(theme.breakpoints.down('lg')); // Tablets usam interface mobile
 
   // Estado para modal de ações no mobile
   const [actionModalOpen, setActionModalOpen] = React.useState(false);
@@ -56,18 +55,18 @@ const UserTable: React.FC<UserTableProps> = ({
     { 
       field: 'nome', 
       headerName: 'Nome', 
-      width: isMobile ? 120 : isTablet ? 160 : 200,
+      width: isTabletMobile ? 250 : 200,
       minWidth: 120,
-      flex: isMobile ? 1 : isTablet ? 0.8 : 1,
+      flex: isTabletMobile ? 0 : 1,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <PersonIcon sx={{ 
-            mr: isMobile ? 0.5 : 1, 
+            mr: isTabletMobile ? 0.5 : 1, 
             color: 'text.secondary', 
-            fontSize: isMobile ? '1rem' : isTablet ? '1.1rem' : '1.25rem',
-            display: isMobile ? 'none' : 'block'
+            fontSize: isTabletMobile ? '1rem' : '1.25rem',
+            display: isTabletMobile ? 'none' : 'block'
           }} />
-          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem'}>
+          <Typography variant="body2" fontSize={isTabletMobile ? '0.75rem' : '0.875rem'}>
             {params.value}
           </Typography>
         </Box>
@@ -76,11 +75,11 @@ const UserTable: React.FC<UserTableProps> = ({
     { 
       field: 'email', 
       headerName: 'Email', 
-      width: isMobile ? 140 : isTablet ? 180 : 250,
+      width: isTabletMobile ? 200 : 250,
       minWidth: 140,
-      ...(isMobile && { width: 0, minWidth: 0, flex: 0, maxWidth: 0 }),
+      ...(isTabletMobile && { width: 0, minWidth: 0, flex: 0, maxWidth: 0 }),
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2" fontSize={isTablet ? '0.75rem' : '0.875rem'} noWrap>
+        <Typography variant="body2" fontSize={isTabletMobile ? '0.75rem' : '0.875rem'} noWrap>
           {params.value}
         </Typography>
       )
@@ -88,19 +87,19 @@ const UserTable: React.FC<UserTableProps> = ({
     {
       field: 'papel',
       headerName: 'Papel',
-      width: isMobile ? 80 : isTablet ? 100 : 150,
+      width: isTabletMobile ? 120 : 150,
       minWidth: 80,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value === 'administrador' ? (isMobile ? 'Admin' : 'Admin') : (isMobile ? 'Func' : 'Funcionário')}
+          label={params.value === 'administrador' ? 'Admin' : 'Funcionário'}
           color={params.value === 'administrador' ? 'primary' : 'default'}
           size="small"
           variant={params.value === 'administrador' ? 'filled' : 'outlined'}
           sx={{ 
-            fontSize: isMobile ? '0.65rem' : isTablet ? '0.7rem' : '0.75rem',
-            height: isMobile ? '20px' : '24px',
+            fontSize: isTabletMobile ? '0.7rem' : '0.75rem',
+            height: isTabletMobile ? '22px' : '24px',
             '& .MuiChip-label': {
-              px: isMobile ? 0.5 : 1
+              px: isTabletMobile ? 0.5 : 1
             }
           }}
         />
@@ -109,19 +108,19 @@ const UserTable: React.FC<UserTableProps> = ({
     {
       field: 'ativo',
       headerName: 'Status',
-      width: isMobile ? 70 : isTablet ? 90 : 120,
+      width: isTabletMobile ? 100 : 120,
       minWidth: 70,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value !== false ? (isMobile ? 'Ativo' : 'Ativo') : (isMobile ? 'Inativo' : 'Inativo')}
+          label={params.value !== false ? 'Ativo' : 'Inativo'}
           color={params.value !== false ? 'success' : 'error'}
           size="small"
           variant={params.value !== false ? 'filled' : 'outlined'}
           sx={{ 
-            fontSize: isMobile ? '0.65rem' : isTablet ? '0.7rem' : '0.75rem',
-            height: isMobile ? '20px' : '24px',
+            fontSize: isTabletMobile ? '0.7rem' : '0.75rem',
+            height: isTabletMobile ? '22px' : '24px',
             '& .MuiChip-label': {
-              px: isMobile ? 0.5 : 1
+              px: isTabletMobile ? 0.5 : 1
             }
           }}
         />
@@ -129,14 +128,14 @@ const UserTable: React.FC<UserTableProps> = ({
     },
     {
       field: 'createdAt',
-      headerName: isMobile ? 'Criado' : 'Criado em',
-      width: isMobile ? 80 : isTablet ? 100 : 130,
+      headerName: isTabletMobile ? 'Criado' : 'Criado em',
+      width: isTabletMobile ? 90 : 130,
       minWidth: 80,
-      ...(isMobile && { width: 0, minWidth: 0, flex: 0, maxWidth: 0 }),
+      ...(isTabletMobile && { width: 0, minWidth: 0, flex: 0, maxWidth: 0 }),
       renderCell: (params: GridRenderCellParams) => {
         const date = params.value ? new Date(params.value) : null;
         return (
-          <Typography variant="body2" fontSize={isTablet ? '0.75rem' : '0.875rem'}>
+          <Typography variant="body2" fontSize={isTabletMobile ? '0.75rem' : '0.875rem'}>
             {date ? date.toLocaleDateString('pt-BR') : ''}
           </Typography>
         );
@@ -144,20 +143,39 @@ const UserTable: React.FC<UserTableProps> = ({
     },
     {
       field: 'actions',
-      headerName: 'Ações',
-      width: isMobile ? 80 : isTablet ? 100 : 130,
+      headerName: isTabletMobile ? '' : 'Ações',
+      width: isTabletMobile ? 80 : 130,
       minWidth: 80,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
-        isMobile ? (
-          <Tooltip title="Ações">
+        isTabletMobile ? (
+          <Tooltip title="Mais opções" arrow>
             <IconButton
-              size="small"
+              size={isTabletMobile ? "medium" : "small"}
               color="primary"
               onClick={() => handleOpenActionModal(params.row as User)}
-              sx={{ p: 0.5 }}
+              sx={{ 
+                p: isTabletMobile ? 1.2 : 0.5,
+                minWidth: isTabletMobile ? '44px' : '32px',
+                minHeight: isTabletMobile ? '44px' : '32px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                border: '1px solid rgba(25, 118, 210, 0.12)',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)'
+                },
+                '&:active': {
+                  transform: 'scale(0.98)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
             >
-              <MoreVertIcon sx={{ fontSize: '1.2rem' }} />
+              <MoreVertIcon sx={{ 
+                fontSize: isTabletMobile ? '1.4rem' : '1.2rem',
+                color: 'primary.main'
+              }} />
             </IconButton>
           </Tooltip>
         ) : (
@@ -192,55 +210,40 @@ const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <>
-      <Paper sx={{ height: isMobile ? 350 : isTablet ? 450 : 500, width: '100%' }}>
+      <Paper elevation={3} sx={{ p: { xs: 1, sm: 2, lg: 3 } }}>
         <DataGrid
-          sx={{
-            borderRadius: 0,
-            '& .MuiDataGrid-columnHeader': {
-              fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
-              fontWeight: 'bold'
-            },
-            '& .MuiDataGrid-cell': {
-              fontSize: isMobile ? '0.7rem' : isTablet ? '0.75rem' : '0.875rem',
-              padding: isMobile ? '4px 8px' : '8px 12px'
-            },
-            '& .MuiDataGrid-row': {
-              minHeight: isMobile ? '40px !important' : '52px !important'
-            },
-            '& .MuiDataGrid-columnSeparator': {
-              display: isMobile ? 'none' : 'block'
-            },
-            '& .MuiDataGrid-toolbarContainer': {
-              padding: isMobile ? '8px' : '16px'
-            }
-          }}
           rows={users}
           columns={columns}
-          loading={loading}
-          pageSizeOptions={isMobile ? [5, 10] : isTablet ? [10, 25] : [10, 25, 50]}
-          initialState={{ 
-            pagination: { 
-              paginationModel: { 
-                pageSize: isMobile ? 5 : isTablet ? 10 : 10 
-              } 
-            } 
+          initialState={{
+            pagination: { paginationModel: { pageSize: isTabletMobile ? 8 : 5 } },
+            sorting: {
+              sortModel: [{ field: 'nome', sort: 'asc' }],
+            },
           }}
+          pageSizeOptions={isTabletMobile ? [8, 16, 24] : [5, 10, 25, 50]}
           disableRowSelectionOnClick
-          getRowId={(row) => row.id}
-          density={isMobile ? 'compact' : 'standard'}
-          localeText={{
-            noRowsLabel: 'Nenhum usuário encontrado',
-            footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
-            MuiTablePagination: {
-              labelRowsPerPage: isMobile ? 'Por página:' : 'Linhas por página:',
-              labelDisplayedRows: ({ from, to, count }) => 
-                isMobile 
-                  ? `${from}-${to} de ${count !== -1 ? count : `+${to}`}`
-                  : `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
+          getRowId={(row) => row.id || 0}
+          sx={{
+            height: isTabletMobile ? 450 : 400,
+            '& .MuiDataGrid-main': {
+              backgroundColor: 'background.paper',
+            },
+            '& .MuiDataGrid-cell': {
+              fontSize: isTabletMobile ? '0.8rem' : '0.875rem',
+              paddingX: isTabletMobile ? 1 : 1.5,
+            },
+            '& .MuiDataGrid-columnHeader': {
+              fontSize: isTabletMobile ? '0.8rem' : '0.875rem',
+              fontWeight: 600,
+              paddingX: isTabletMobile ? 1 : 1.5,
+            },
+            '& .MuiDataGrid-row:hover': {
+              backgroundColor: 'action.hover',
             },
           }}
         />
       </Paper>
+      
       {/* Modal de ações para mobile */}
       <UserActionsModal
         open={actionModalOpen}

@@ -16,7 +16,6 @@ interface SalesTableProps {
   onViewSale: (sale: Sale) => void;
   onEditSale: (sale: Sale) => void;
   onEditStatus: (sale: Sale) => void;
-  onPrintSale: (sale: Sale) => void;
 }
 
 const SalesTable: React.FC<SalesTableProps> = ({
@@ -24,12 +23,10 @@ const SalesTable: React.FC<SalesTableProps> = ({
   loading,
   onViewSale,
   onEditSale,
-  onEditStatus,
-  onPrintSale
+  onEditStatus
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+  const isTabletMobile = useMediaQuery(theme.breakpoints.down('lg')); // Tablets usam interface mobile
 
   // Estado para modal de ações no mobile
   const [actionModalOpen, setActionModalOpen] = React.useState(false);
@@ -48,24 +45,27 @@ const SalesTable: React.FC<SalesTableProps> = ({
     {
       field: 'numero',
       headerName: '#',
-      width: isMobile ? 80 : 100,
+      width: isTabletMobile ? 90 : 100,
       renderCell: (params: GridRenderCellParams) => (
-        <strong>#{params.value}</strong>
+        <strong style={{ fontSize: isTabletMobile ? '0.7rem' : '0.875rem' }}>
+          #{params.value}
+        </strong>
       ),
     },
     {
       field: 'cliente',
       headerName: 'Cliente',
-      width: isMobile ? 160 : isTablet ? 200 : 250,
+      width: isTabletMobile ? 280 : 250,
       minWidth: 160,
-      flex: !isMobile ? 1 : 0,
+      flex: !isTabletMobile ? 1 : 0,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ 
           width: '100%', 
           textOverflow: 'ellipsis', 
           whiteSpace: 'nowrap', 
           overflow: 'hidden',
-          textAlign: 'left'
+          textAlign: 'left',
+          fontSize: isTabletMobile ? '0.75rem' : '0.875rem'
         }}>
           {params.value}
         </Box>
@@ -73,38 +73,53 @@ const SalesTable: React.FC<SalesTableProps> = ({
     },
     {
       field: 'dataVenda',
-      headerName: 'Data',
-      width: isMobile ? 100 : 120,
+      headerName: isTabletMobile ? 'Data' : 'Data',
+      width: isTabletMobile ? 100 : 120,
       renderCell: (params: GridRenderCellParams) => {
         const date = new Date(params.value || params.row.createdAt);
-        return isMobile ? date.toLocaleDateString('pt-BR', { 
-          day: '2-digit', 
-          month: '2-digit' 
-        }) : date.toLocaleDateString('pt-BR');
+        return (
+          <Box sx={{ fontSize: isTabletMobile ? '0.7rem' : '0.875rem' }}>
+            {isTabletMobile ? date.toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: '2-digit' 
+            }) : date.toLocaleDateString('pt-BR')}
+          </Box>
+        );
       },
     },
     {
       field: 'vendedor',
       headerName: 'Vendedor',
-      width: isMobile ? 0 : isTablet ? 140 : 170,
-      maxWidth: isMobile ? 0 : undefined,
-      renderCell: (params: GridRenderCellParams) => 
-        params.value?.nome || 'N/A',
+      width: isTabletMobile ? 110 : 170,
+      maxWidth: isTabletMobile ? 110 : undefined,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ 
+          fontSize: isTabletMobile ? '0.7rem' : '0.875rem',
+          textOverflow: 'ellipsis', 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden'
+        }}>
+          {isTabletMobile ? 'Func.' : (params.value?.nome || 'N/A')}
+        </Box>
+      ),
     },
     {
       field: 'total',
-      headerName: 'Total',
-      width: isMobile ? 100 : 120,
+      headerName: isTabletMobile ? 'Valor' : 'Total',
+      width: isTabletMobile ? 110 : 120,
       renderCell: (params: GridRenderCellParams) => (
-        <strong style={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
+        <strong style={{ 
+          fontSize: isTabletMobile ? '0.75rem' : '0.875rem',
+          color: isTabletMobile ? '#2e7d32' : 'inherit'
+        }}>
           R$ {(params.value || 0).toFixed(2)}
         </strong>
       ),
     },
     {
       field: 'status',
-      headerName: 'Status',
-      width: isMobile ? 90 : 120,
+      headerName: isTabletMobile ? 'Status' : 'Status',
+      width: isTabletMobile ? 90 : 120,
       renderCell: (params: GridRenderCellParams) => {
         const status = params.value || 'paga';
         const getStatusColor = (status: string) => {
@@ -123,7 +138,10 @@ const SalesTable: React.FC<SalesTableProps> = ({
         return (
           <Tooltip title="Clique para editar status">
             <Chip
-              label={isMobile ? status.charAt(0).toUpperCase() : status.charAt(0).toUpperCase() + status.slice(1)}
+              label={isTabletMobile ? 
+                (status === 'paga' ? 'Paga' : status === 'pendente' ? 'Pend.' : 'Canc.') : 
+                status.charAt(0).toUpperCase() + status.slice(1)
+              }
               color={getStatusColor(status) as any}
               size="small"
               onClick={(e) => {
@@ -132,7 +150,9 @@ const SalesTable: React.FC<SalesTableProps> = ({
               }}
               sx={{
                 cursor: 'pointer',
-                fontSize: isMobile ? '0.65rem' : '0.75rem',
+                fontSize: isTabletMobile ? '0.65rem' : '0.75rem',
+                minWidth: isTabletMobile ? 'auto' : 'auto',
+                height: isTabletMobile ? '22px' : '24px',
                 '&:hover': {
                   opacity: 0.8,
                   transform: 'scale(1.05)',
@@ -146,20 +166,39 @@ const SalesTable: React.FC<SalesTableProps> = ({
     },
     {
       field: 'actions',
-      headerName: 'Ações',
-      width: isMobile ? 70 : 160,
+      headerName: '',
+      width: isTabletMobile ? 80 : 160,
       sortable: false,
       filterable: false,
       renderCell: (params: GridRenderCellParams) => (
-        isMobile ? (
-          <Tooltip title="Ações">
+        isTabletMobile ? (
+          <Tooltip title="Mais opções" arrow>
             <IconButton
-              size="small"
+              size={isTabletMobile ? "medium" : "small"}
               color="primary"
               onClick={() => handleOpenActionModal(params.row)}
-              sx={{ p: 0.5 }}
+              sx={{ 
+                p: isTabletMobile ? 1.2 : 0.5,
+                minWidth: isTabletMobile ? '44px' : '32px',
+                minHeight: isTabletMobile ? '44px' : '32px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                border: '1px solid rgba(25, 118, 210, 0.12)',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)'
+                },
+                '&:active': {
+                  transform: 'scale(0.98)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
             >
-              <MoreVertIcon sx={{ fontSize: '1.2rem' }} />
+              <MoreVertIcon sx={{ 
+                fontSize: isTabletMobile ? '1.4rem' : '1.2rem',
+                color: 'primary.main'
+              }} />
             </IconButton>
           </Tooltip>
         ) : (
@@ -200,27 +239,27 @@ const SalesTable: React.FC<SalesTableProps> = ({
 
   return (
     <Box sx={{ 
-      height: isMobile ? 450 : 550, 
+      height: isTabletMobile ? 450 : 550, 
       width: '100%',
       '& .MuiDataGrid-root': {
         border: 'none',
       },
       '& .MuiDataGrid-columnHeaders': {
-        fontSize: isMobile ? '0.75rem' : '0.875rem',
+        fontSize: isTabletMobile ? '0.7rem' : '0.875rem',
         fontWeight: 'bold',
-        minHeight: isMobile ? '35px' : '56px',
+        minHeight: isTabletMobile ? '40px' : '56px',
       },
       '& .MuiDataGrid-cell': {
-        fontSize: isMobile ? '0.75rem' : '0.875rem',
-        padding: isMobile ? '4px 6px' : '8px',
-        minHeight: isMobile ? '40px' : '52px',
+        fontSize: isTabletMobile ? '0.7rem' : '0.875rem',
+        padding: isTabletMobile ? '4px 6px' : '8px',
+        minHeight: isTabletMobile ? '45px' : '52px',
         whiteSpace: 'normal',
         lineHeight: '1.2',
         display: 'flex',
         alignItems: 'center',
       },
       '& .MuiDataGrid-row': {
-        minHeight: isMobile ? '40px' : '52px',
+        minHeight: isTabletMobile ? '45px' : '52px',
       },
       '& .MuiDataGrid-virtualScroller': {
         overflow: 'auto',
@@ -232,20 +271,20 @@ const SalesTable: React.FC<SalesTableProps> = ({
         loading={loading}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: isMobile ? 5 : 10 },
+            paginationModel: { page: 0, pageSize: isTabletMobile ? 8 : 10 },
           },
         }}
-        pageSizeOptions={isMobile ? [5, 10] : [5, 10, 25]}
+        pageSizeOptions={isTabletMobile ? [5, 8, 15] : [5, 10, 25]}
         disableRowSelectionOnClick
-        disableColumnMenu={isMobile}
+        disableColumnMenu={isTabletMobile}
         getRowId={(row) => row.id || row._id}
         localeText={{
           noRowsLabel: 'Nenhuma venda encontrada',
           footerRowSelected: (count) => `${count} linha(s) selecionada(s)`,
           MuiTablePagination: {
-            labelRowsPerPage: isMobile ? 'Por página:' : 'Linhas por página:',
+            labelRowsPerPage: isTabletMobile ? 'Por página:' : 'Linhas por página:',
             labelDisplayedRows: ({ from, to, count }) => 
-              isMobile 
+              isTabletMobile 
                 ? `${from}-${to} de ${count !== -1 ? count : `+${to}`}`
                 : `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`,
           },
@@ -258,20 +297,20 @@ const SalesTable: React.FC<SalesTableProps> = ({
             backgroundColor: 'action.hover',
           },
           '& .MuiDataGrid-columnSeparator': {
-            display: isMobile ? 'none' : 'block',
+            display: isTabletMobile ? 'none' : 'block',
           },
           '& .MuiDataGrid-toolbarContainer': {
-            padding: isMobile ? '4px' : '16px',
+            padding: isTabletMobile ? '4px' : '16px',
           },
           '& .MuiDataGrid-footerContainer': {
-            minHeight: isMobile ? '45px' : '52px',
+            minHeight: isTabletMobile ? '45px' : '52px',
             '& .MuiTablePagination-root': {
-              fontSize: isMobile ? '0.75rem' : '0.875rem',
+              fontSize: isTabletMobile ? '0.75rem' : '0.875rem',
             },
           },
         }}
-        density={isMobile ? 'standard' : 'standard'}
-        rowHeight={isMobile ? 45 : 56}
+        density={isTabletMobile ? 'compact' : 'standard'}
+        rowHeight={isTabletMobile ? 45 : 56}
       />
       {/* Modal de ações para mobile */}
       <SaleActionsModal
@@ -281,7 +320,6 @@ const SalesTable: React.FC<SalesTableProps> = ({
         onView={onViewSale}
         onEdit={onEditSale}
         onEditStatus={onEditStatus}
-        onPrint={onPrintSale}
       />
     </Box>
   );

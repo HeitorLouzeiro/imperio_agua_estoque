@@ -17,8 +17,7 @@ import {
   Close as CloseIcon,
   Visibility as ViewIcon,
   EditNote as EditNoteIcon,
-  Assignment as StatusIcon,
-  Print as PrintIcon
+  Assignment as StatusIcon
 } from '@mui/icons-material';
 import { Sale } from '../../types';
 
@@ -29,7 +28,6 @@ interface SaleActionsModalProps {
   onView: (sale: Sale) => void;
   onEdit: (sale: Sale) => void;
   onEditStatus: (sale: Sale) => void;
-  onPrint: (sale: Sale) => void;
 }
 
 const SaleActionsModal: React.FC<SaleActionsModalProps> = ({
@@ -38,8 +36,7 @@ const SaleActionsModal: React.FC<SaleActionsModalProps> = ({
   sale,
   onView,
   onEdit,
-  onEditStatus,
-  onPrint
+  onEditStatus
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -89,13 +86,6 @@ const SaleActionsModal: React.FC<SaleActionsModalProps> = ({
               <StatusIcon color="secondary" />
             </ListItemIcon>
             <ListItemText primary="Editar Status" secondary="Alterar status da venda" />
-          </ListItem>
-          <Divider variant="inset" component="li" />
-          <ListItem button onClick={() => handleAction(() => onPrint(sale))} sx={{ py: 1.5 }}>
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <PrintIcon color="info" />
-            </ListItemIcon>
-            <ListItemText primary="Imprimir" secondary="Gerar recibo da venda" />
           </ListItem>
         </List>
       </DialogContent>

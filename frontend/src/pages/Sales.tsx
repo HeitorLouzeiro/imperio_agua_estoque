@@ -129,11 +129,6 @@ const Sales: React.FC = () => {
     setEditDialogOpen(true);
   };
 
-  const handlePrintSale = (sale: Sale) => {
-    // Implementação movida para o componente SaleViewDialog
-    showSnackbar('Use o botão de impressão no diálogo de visualização', 'info');
-  };
-
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
       await updateSaleStatus(id, status);
@@ -155,7 +150,8 @@ const Sales: React.FC = () => {
 
   const handleSaveEditedSale = async (saleData: any) => {
     try {
-      await salesService.update(saleData.id, saleData);
+      const { id, ...saleUpdateData } = saleData; // Separar ID dos dados da venda
+      await salesService.update(id, saleUpdateData);
       
       // Recarregar vendas
       await loadSales(products);
@@ -433,7 +429,6 @@ const Sales: React.FC = () => {
             onViewSale={handleViewSale}
             onEditSale={handleEditSale}
             onEditStatus={handleEditStatus}
-            onPrintSale={handlePrintSale}
           />
         </Paper>
 
@@ -477,14 +472,41 @@ const Sales: React.FC = () => {
         recentClients={recentClients}
       />
 
-      {/* Snackbar */}
+      {/* Snackbar Animado */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={5000}
         onClose={hideSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{
+          mt: 8,
+          '& .MuiAlert-root': {
+            minWidth: '300px',
+            maxWidth: '400px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+            animation: snackbar.open ? 'slideInRight 0.4s ease-out' : 'none',
+          }
+        }}
       >
-        <Alert onClose={hideSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert 
+          onClose={hideSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            '& .MuiAlert-message': {
+              paddingTop: '4px',
+              paddingBottom: '4px'
+            },
+            '& .MuiAlert-icon': {
+              fontSize: '1.2rem'
+            }
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

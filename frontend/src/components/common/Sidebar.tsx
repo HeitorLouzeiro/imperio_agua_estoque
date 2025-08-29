@@ -78,6 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTabletMobile = useMediaQuery(theme.breakpoints.down('lg')); // Tablets usam interface mobile
 
   const filteredMenuItems = menuItems.filter(item =>
     item.roles.includes((user as any)?.role || (user as any)?.papel || 'funcionario')
@@ -85,29 +86,29 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
 
   const drawer = (
     <Box sx={{ height: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Toolbar sx={{ px: isMobile ? 1 : 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 1 : 2, width: '100%' }}>
+      <Toolbar sx={{ px: isTabletMobile ? 1 : 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: isTabletMobile ? 1 : 2, width: '100%' }}>
           <Avatar sx={{ 
             bgcolor: 'rgba(255, 255, 255, 0.15)', 
             color: 'white',
-            width: isMobile ? 36 : 44,
-            height: isMobile ? 36 : 44,
+            width: isTabletMobile ? 36 : 44,
+            height: isTabletMobile ? 36 : 44,
             border: '2px solid rgba(255, 255, 255, 0.3)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             '& svg': {
               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
             }
           }}>
-            <LocalGroceryStore fontSize={isMobile ? 'medium' : 'large'} />
+            <LocalGroceryStore fontSize={isTabletMobile ? 'medium' : 'large'} />
           </Avatar>
           <Box>
                         <Typography 
-              variant={isMobile ? "subtitle1" : "h6"} 
+              variant={isTabletMobile ? "subtitle1" : "h6"} 
               component="h1" 
               sx={{ 
                 color: 'white', 
                 fontWeight: 700,
-                fontSize: isMobile ? '1rem' : '1.25rem',
+                fontSize: isTabletMobile ? '1rem' : '1.25rem',
                 lineHeight: 1.2,
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
@@ -119,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
               variant="caption" 
               sx={{ 
                 color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: isMobile ? '0.65rem' : '0.75rem',
+                fontSize: isTabletMobile ? '0.65rem' : '0.75rem',
                 fontWeight: 500,
                 textShadow: '0 1px 2px rgba(0,0,0,0.3)',
               }}
@@ -132,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
 
       <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
 
-      <List sx={{ px: isMobile ? 1 : 2, py: 1 }}>
+      <List sx={{ px: isTabletMobile ? 1 : 2, py: 1 }}>
         {filteredMenuItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
@@ -222,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
   return (
     <Box
       component="nav"
-      sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}
     >
       {/* Mobile drawer */}
       <Drawer
@@ -233,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
           keepMounted: true, // Melhor desempenho no mobile
         }}
         sx={{
-          display: { xs: 'block', sm: 'none' },
+          display: { xs: 'block', lg: 'none' }, // Mostra até tablet (lg)
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
@@ -248,7 +249,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onDrawerToggle }) => {
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: 'none', sm: 'block' },
+          display: { xs: 'none', lg: 'block' }, // Só mostra em desktop (lg+)
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,

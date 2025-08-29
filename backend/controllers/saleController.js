@@ -211,6 +211,18 @@ export const atualizarVenda = async (req, res) => {
     }
     
     // Atualização completa da venda
+    if (itens && itens.length > 0) {
+      // Validar se todos os produtos existem e estão ativos
+      for (const item of itens) {
+        const produto = await Product.findOne({ _id: item.produto, ativo: true });
+        if (!produto) {
+          return res.status(404).json({ 
+            erro: `Produto com ID ${item.produto} não encontrado ou está inativo` 
+          });
+        }
+      }
+    }
+    
     venda.cliente = cliente || venda.cliente;
     venda.itens = itens || venda.itens;
     venda.formaPagamento = formaPagamento || venda.formaPagamento;

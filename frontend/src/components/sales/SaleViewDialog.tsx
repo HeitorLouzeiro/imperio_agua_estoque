@@ -174,7 +174,7 @@ const SaleViewDialog: React.FC<SaleViewDialogProps> = ({
             </Typography>
           </Grid>
           
-          {sale.desconto && sale.desconto > 0 && (
+          {sale.desconto !== undefined && sale.desconto !== null && sale.desconto > 0 && (
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
                 Desconto
@@ -241,7 +241,7 @@ const SaleViewDialog: React.FC<SaleViewDialogProps> = ({
               <Typography variant="body1">
                 Subtotal: R$ {(sale.subtotal || 0).toFixed(2)}
               </Typography>
-              {sale.desconto && sale.desconto > 0 && (
+              {sale.desconto !== undefined && sale.desconto !== null && sale.desconto > 0 && (
                 <Typography variant="body1" color="error">
                   Desconto: -R$ {sale.desconto.toFixed(2)}
                 </Typography>
