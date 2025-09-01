@@ -180,11 +180,14 @@ export const excluirVenda = async (req, res) => {
     }
 
     // Restaurar estoque dos produtos
-    for (const item of venda.itens) {
-      await Product.findByIdAndUpdate(
-        item.produto,
-        { $inc: { quantidade: item.quantidade } }
-      );
+    // Evita restaurar duas vezes: se já estava cancelada, o estoque já foi devolvido
+    if (venda.status !== 'cancelada') {
+      for (const item of venda.itens) {
+        await Product.findByIdAndUpdate(
+          item.produto,
+          { $inc: { quantidade: item.quantidade } }
+        );
+      }
     }
 
     res.json({ message: 'Venda excluída com sucesso' });
@@ -202,12 +205,55 @@ export const atualizarVenda = async (req, res) => {
     
     const { cliente, itens, formaPagamento, desconto, observacoes, status } = req.body;
     
-    // Se apenas status foi enviado, atualizar apenas o status
+    // Se apenas status foi enviado, tratar transições e ajustar estoque
     if (status && Object.keys(req.body).length === 1) {
-      venda.status = status;
-      await venda.save();
-      await venda.populate(['vendedor', 'itens.produto']);
-      return res.json(venda);
+      const statusAnterior = venda.status;
+
+      // Se não houve mudança, apenas retorna
+      if (statusAnterior === status) {
+        await venda.populate(['vendedor', 'itens.produto']);
+        return res.json(venda);
+      }
+
+      try {
+        // De não-cancelada para cancelada: devolver estoque
+        if (status === 'cancelada' && statusAnterior !== 'cancelada') {
+          for (const item of venda.itens) {
+            await Product.findByIdAndUpdate(
+              item.produto,
+              { $inc: { quantidade: item.quantidade } }
+            );
+          }
+        }
+        // De cancelada para pendente/paga: debitar novamente estoque, com validação
+        else if (statusAnterior === 'cancelada' && status !== 'cancelada') {
+          for (const item of venda.itens) {
+            const produto = await Product.findById(item.produto);
+            if (!produto || !produto.ativo) {
+              return res.status(404).json({ erro: `Produto com ID ${item.produto} não encontrado ou está inativo` });
+            }
+            if (produto.quantidade < item.quantidade) {
+              return res.status(400).json({
+                erro: `Estoque insuficiente para reativar venda. Produto "${produto.nome}" - Disponível: ${produto.quantidade}, necessário: ${item.quantidade}`
+              });
+            }
+          }
+          for (const item of venda.itens) {
+            await Product.findByIdAndUpdate(
+              item.produto,
+              { $inc: { quantidade: -item.quantidade } }
+            );
+          }
+        }
+
+        venda.status = status;
+        await venda.save();
+        await venda.populate(['vendedor', 'itens.produto']);
+        return res.json(venda);
+      } catch (e) {
+        console.error('Erro ao ajustar estoque na mudança de status:', e);
+        return res.status(400).json({ erro: 'Falha ao ajustar estoque na mudança de status' });
+      }
     }
     
     // Atualização completa da venda

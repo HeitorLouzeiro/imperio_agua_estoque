@@ -44,7 +44,13 @@ const SaleStatusDialog: React.FC<SaleStatusDialogProps> = ({
       await onUpdateStatus(sale.id.toString(), newStatus);
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      // Opcionalmente, poderíamos expor um callback de erro; como a página já trata,
+      // aqui apenas mantemos o log mais amigável.
+      const apiMessage = (error as any)?.response?.data?.erro
+        || (error as any)?.response?.data?.message
+        || (error as Error)?.message
+        || 'Não foi possível atualizar o status.';
+      console.error('Erro ao atualizar status:', apiMessage);
     }
   };
 

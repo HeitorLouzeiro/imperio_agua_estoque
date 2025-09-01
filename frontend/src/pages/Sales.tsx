@@ -144,7 +144,15 @@ const Sales: React.FC = () => {
       
       setStatusDialogOpen(false);
     } catch (error) {
-      showSnackbar('Erro ao atualizar status', 'error');
+      // Mostrar mensagem específica do backend quando houver (ex.: sem estoque ao reativar)
+      const apiMessage = (error as any)?.response?.data?.erro
+        || (error as any)?.response?.data?.message
+        || (error as Error)?.message
+        || 'Erro ao atualizar status';
+      const friendly = /estoque/i.test(apiMessage)
+        ? 'Você não pode realizar essa ação pois não tem estoque.'
+        : apiMessage;
+      showSnackbar(friendly, 'error');
     }
   };
 
