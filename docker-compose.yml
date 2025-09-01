@@ -2,15 +2,16 @@ services:
   mongo:
     image: mongo:7
     container_name: imperio_agua_mongo
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
   backend:
     build: ./backend
     container_name: imperio_agua_backend
     ports:
-      - "3000:3000"
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/imperio_agua
     volumes:
       - ./backend/.env:/app/.env
     depends_on:
@@ -25,10 +26,10 @@ services:
   seed:
     build: ./backend
     container_name: imperio_agua_seed
-    command: ["node", "seed.js"]
+    command: ["node", "seedData.js"]
     depends_on:
       - mongo
-    env_file:
-      - ./backend/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/imperio_agua
 volumes:
   mongo_data:
