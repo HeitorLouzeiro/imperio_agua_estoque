@@ -1,8 +1,17 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
+// Descobre a URL base da API: usa REACT_APP_API_URL em produção e fallback local em dev
+const API_BASE_URL =
+  // Variável de ambiente do CRA (defina no Render para apontar para o backend)
+  process.env.REACT_APP_API_URL ||
+  // Fallback: se houver window, tenta mesma origem + /api
+  (typeof window !== 'undefined' ? `${window.location.origin}/api` : undefined) ||
+  // Último recurso: ambiente local
+  'http://localhost:5000/api';
+
 // Configuração base do axios
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

@@ -1,0 +1,15 @@
+# Evitar enviar arquivos desnecessários para o build
+.git
+.gitignore
+Dockerfile
+*.log
+*.env
+.env*
+node_modules
+backend/node_modules
+frontend/node_modules
+frontend/build
+backend/.env
+backend/*.log
+frontend/*.log
+docker-compose.yml
