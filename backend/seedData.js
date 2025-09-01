@@ -5,10 +5,30 @@ import Product from './models/Product.js';
 import Sale from './models/Sale.js';
 import faker from 'faker-br';
 
+// Leitura de argumentos/variáveis para quantidade
+function getArg(name) {
+  const idx = process.argv.findIndex(
+    (a) => a === `--${name}` || a.startsWith(`--${name}=`)
+  );
+  if (idx === -1) return undefined;
+  const token = process.argv[idx];
+  if (token.includes('=')) return token.split('=')[1];
+  const next = process.argv[idx + 1];
+  if (next && !next.startsWith('--')) return next;
+  return true;
+}
+
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/imperio_agua';
 
 async function seed() {
   await mongoose.connect(MONGO_URI);
+
+  const productsToGenerate = Number(getArg('products') ?? process.env.SEED_PRODUCTS ?? 40);
+  const salesToGenerate = Number(
+    getArg('sales') ?? process.env.SEED_SALES ?? Math.max(1, Math.round(productsToGenerate * 1.5))
+  );
+
+  console.log(`⚙️  Gerando seed com ${productsToGenerate} produtos e ${salesToGenerate} vendas adicionais...`);
 
   // Usuários
   const users = [
@@ -69,7 +89,7 @@ async function seed() {
     return code;
   };
 
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < productsToGenerate; i++) {
     const categoria = pick(categorias);
     const volumeLitros = pick([0.5, 1, 1.5, 2, 5, 10, 20]);
     const nome = `${categoria} ${volumeLitros}L`;
@@ -212,7 +232,7 @@ async function seed() {
   const nextNumero = (n) => `V${String(n).padStart(6, '0')}`;
   let contadorVendas = vendas.length + 1; // começa após V000005
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < salesToGenerate; i++) {
     const itensCount = randInt(1, 4);
     const itens = [];
     let subtotal = 0;
