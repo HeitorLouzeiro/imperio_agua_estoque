@@ -28,7 +28,11 @@ Sistema completo de controle de estoque desenvolvido com **Node.js** + **Express
 
 O sistema segue uma arquitetura **client-server** com os seguintes componentes:
 
-![Diagrama de Arquitetura](/.github/assets/images/diagrama_estoque_agua.png)
+
+<p align="center">
+    <img src=".github/assets/images/diagrama_estoque_agua.png" alt="Diagrama" width="500">
+    <br/>
+</p>
 
 ## 🚀 Início Rápido
 
